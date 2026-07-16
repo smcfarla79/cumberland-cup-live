@@ -5,11 +5,19 @@ import { PinGate } from "@/components/pin-gate";
 import { PlayerPicker } from "@/components/player-picker";
 import { RoundPicker } from "@/components/round-picker";
 import { ScoreEntry } from "@/components/score-entry";
+import { TeamDraft } from "@/components/team-draft";
 import { clearSession, getSession, setSession } from "@/lib/session";
 import { createClient } from "@/lib/supabase/client";
-import type { Hole, Player, Round, Tournament } from "@/lib/types";
+import type { Hole, Player, Round, Team, Tournament } from "@/lib/types";
 
-type Step = "loading" | "pin" | "player" | "rounds" | "score" | "error";
+type Step =
+  | "loading"
+  | "pin"
+  | "player"
+  | "rounds"
+  | "draft"
+  | "score"
+  | "error";
 
 export function CupApp() {
   const [step, setStep] = useState<Step>("loading");
@@ -17,6 +25,7 @@ export function CupApp() {
   const [tournament, setTournament] = useState<Tournament | null>(null);
   const [players, setPlayers] = useState<Player[]>([]);
   const [rounds, setRounds] = useState<Round[]>([]);
+  const [teams, setTeams] = useState<Team[]>([]);
   const [holes, setHoles] = useState<Hole[]>([]);
   const [session, setSessionState] = useState(getSession());
   const [pinUnlocked, setPinUnlocked] = useState(false);
@@ -27,6 +36,7 @@ export function CupApp() {
     if (
       !supabaseUrl ||
       supabaseUrl.includes("your-project") ||
+      supabaseUrl.includes("PASTE_") ||
       !supabaseUrl.includes(".supabase.co")
     ) {
       setError(
@@ -82,24 +92,33 @@ export function CupApp() {
     const activeTournament = tournamentRow as Tournament;
     setTournament(activeTournament);
 
-    const [{ data: playerRows }, { data: roundRows }, { data: holeRows }] =
-      await Promise.all([
-        supabase
-          .from("tournament_players")
-          .select("player:players(id, display_name)")
-          .eq("tournament_id", activeTournament.id),
-        supabase
-          .from("rounds")
-          .select("id, tournament_id, name, day_number, play_date, scoring_format")
-          .eq("tournament_id", activeTournament.id)
-          .order("day_number")
-          .order("play_date"),
-        supabase
-          .from("holes")
-          .select("id, hole_number, par, handicap_index, yards")
-          .eq("course_id", activeTournament.course_id)
-          .order("hole_number"),
-      ]);
+    const [
+      { data: playerRows },
+      { data: roundRows },
+      { data: holeRows },
+      { data: teamRows },
+    ] = await Promise.all([
+      supabase
+        .from("tournament_players")
+        .select("player:players(id, display_name)")
+        .eq("tournament_id", activeTournament.id),
+      supabase
+        .from("rounds")
+        .select("id, tournament_id, name, day_number, play_date, scoring_format")
+        .eq("tournament_id", activeTournament.id)
+        .order("day_number")
+        .order("play_date"),
+      supabase
+        .from("holes")
+        .select("id, hole_number, par, handicap_index, yards")
+        .eq("course_id", activeTournament.course_id)
+        .order("hole_number"),
+      supabase
+        .from("teams")
+        .select("id, tournament_id, name, color")
+        .eq("tournament_id", activeTournament.id)
+        .order("name"),
+    ]);
 
     const loadedPlayers =
       (playerRows ?? [])
@@ -114,6 +133,7 @@ export function CupApp() {
     setPlayers(loadedPlayers);
     setRounds((roundRows as Round[]) ?? []);
     setHoles((holeRows as Hole[]) ?? []);
+    setTeams((teamRows as Team[]) ?? []);
 
     const existing = getSession();
     if (
@@ -173,7 +193,9 @@ export function CupApp() {
         <h1 className="font-display text-3xl">Can’t connect yet</h1>
         <p className="mt-3 text-muted">{error}</p>
         <p className="mt-4 text-sm text-muted">
-          Confirm `.env.local` has your Supabase URL and anon key, then refresh.
+          On your computer: check `.env.local`, then restart `npm run dev`. On
+          the live Vercel site: set Environment Variables to the same Supabase
+          URL and anon key (URL must not end with `/rest/v1/`), then Redeploy.
         </p>
       </div>
     );
@@ -191,6 +213,17 @@ export function CupApp() {
 
   if (step === "player" || !session) {
     return <PlayerPicker players={players} onSelect={handlePlayerSelect} />;
+  }
+
+  if (step === "draft") {
+    return (
+      <TeamDraft
+        tournamentId={tournament.id}
+        players={players}
+        teams={teams}
+        onBack={() => setStep("rounds")}
+      />
+    );
   }
 
   if (step === "score" && activeRound) {
@@ -216,6 +249,7 @@ export function CupApp() {
         setActiveRound(round);
         setStep("score");
       }}
+      onOpenDraft={() => setStep("draft")}
       onSignOut={handleSignOut}
     />
   );

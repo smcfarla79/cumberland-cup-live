@@ -6,6 +6,7 @@ type RoundPickerProps = {
   playerName: string;
   rounds: Round[];
   onSelect: (round: Round) => void;
+  onOpenDraft: () => void;
   onSignOut: () => void;
 };
 
@@ -13,6 +14,7 @@ export function RoundPicker({
   playerName,
   rounds,
   onSelect,
+  onOpenDraft,
   onSignOut,
 }: RoundPickerProps) {
   return (
@@ -23,8 +25,12 @@ export function RoundPicker({
             <p className="text-sm tracking-[0.18em] text-fairway uppercase">
               Cumberland Cup
             </p>
-            <h1 className="font-display mt-2 text-4xl text-ink">Hello, {playerName.split(" ")[0]}</h1>
-            <p className="mt-3 text-muted">Choose a round to enter live scores.</p>
+            <h1 className="font-display mt-2 text-4xl text-ink">
+              Hello, {playerName.split(" ")[0]}
+            </h1>
+            <p className="mt-3 text-muted">
+              Choose a round to score, or set teams after the draft.
+            </p>
           </div>
           <button
             type="button"
@@ -36,7 +42,20 @@ export function RoundPicker({
         </div>
       </header>
 
-      <ul className="mt-8 space-y-3 animate-fade">
+      <button
+        type="button"
+        onClick={onOpenDraft}
+        className="mt-8 w-full border border-pine bg-pine px-4 py-4 text-left text-fog transition hover:brightness-110 animate-rise"
+      >
+        <span className="block text-xs tracking-wide text-gold uppercase">
+          Draft night
+        </span>
+        <span className="mt-1 block text-base font-semibold">
+          Assign Team A &amp; Team B
+        </span>
+      </button>
+
+      <ul className="mt-6 space-y-3 animate-fade">
         {rounds.map((round) => (
           <li key={round.id}>
             <button

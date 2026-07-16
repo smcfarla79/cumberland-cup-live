@@ -36,6 +36,18 @@ export type HoleScore = {
   strokes: number;
 };
 
+export type Team = {
+  id: string;
+  tournament_id: string;
+  name: string;
+  color: string | null;
+};
+
+export type TeamAssignment = {
+  team_id: string;
+  player_id: string;
+};
+
 export type AppSession = {
   tournamentId: string;
   playerId: string;
