@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState, useEffectEvent } from "react";
+import { BrandLogo } from "@/components/brand-logo";
 import { createClient } from "@/lib/supabase/client";
 import { TeamSwatch } from "@/components/team-swatch";
 import type { Player, Round, Team, TeamAssignment } from "@/lib/types";
@@ -117,10 +118,15 @@ export function LiveBoard({
         >
           ← Back to rounds
         </button>
-        <h1 className="font-display mt-3 text-4xl text-ink">Live board</h1>
-        <p className="mt-3 text-muted">
-          Stroke totals refresh every few seconds. Cup match points come next.
-        </p>
+        <div className="mt-4 flex items-center gap-3">
+          <BrandLogo size={56} className="shrink-0 ring-1 ring-mist" />
+          <div>
+            <h1 className="font-display text-4xl text-ink">Live board</h1>
+            <p className="mt-1 text-muted">
+              Stroke totals refresh every few seconds.
+            </p>
+          </div>
+        </div>
       </header>
 
       <label className="mt-6 block animate-fade">

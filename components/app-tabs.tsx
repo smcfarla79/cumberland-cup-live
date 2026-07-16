@@ -1,5 +1,6 @@
 "use client";
 
+import { BrandLogo } from "@/components/brand-logo";
 import type { AppTab } from "@/lib/types";
 
 const TABS: { id: AppTab; label: string }[] = [
@@ -21,16 +22,19 @@ export function AppTabs({ active, onChange, playerName, onSignOut }: AppTabsProp
   return (
     <header className="sticky top-0 z-20 border-b border-mist/80 bg-fog/95 backdrop-blur-sm">
       <div className="mx-auto flex max-w-2xl items-center justify-between gap-3 px-4 pt-4">
-        <div>
-          <p className="text-[11px] tracking-[0.18em] text-fairway uppercase">
-            Cumberland Cup
-          </p>
-          <p className="text-sm text-ink">{playerName}</p>
+        <div className="flex min-w-0 items-center gap-3">
+          <BrandLogo size={40} className="shrink-0 ring-1 ring-mist" />
+          <div className="min-w-0">
+            <p className="truncate text-[11px] tracking-[0.18em] text-fairway uppercase">
+              Cumberland Cup
+            </p>
+            <p className="truncate text-sm text-ink">{playerName}</p>
+          </div>
         </div>
         <button
           type="button"
           onClick={onSignOut}
-          className="text-xs text-muted underline-offset-2 hover:text-ink hover:underline"
+          className="shrink-0 text-xs text-muted underline-offset-2 hover:text-ink hover:underline"
         >
           Switch
         </button>

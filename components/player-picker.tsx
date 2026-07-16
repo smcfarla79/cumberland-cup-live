@@ -1,5 +1,6 @@
 "use client";
 
+import { BrandLogo } from "@/components/brand-logo";
 import type { Player } from "@/lib/types";
 
 type PlayerPickerProps = {
@@ -11,6 +12,7 @@ export function PlayerPicker({ players, onSelect }: PlayerPickerProps) {
   return (
     <section className="mx-auto flex min-h-dvh w-full max-w-lg flex-col px-5 py-10">
       <div className="animate-rise">
+        <BrandLogo size={88} className="mb-6 ring-1 ring-mist" />
         <p className="text-sm tracking-[0.18em] text-fairway uppercase">Who are you?</p>
         <h1 className="font-display mt-2 text-4xl text-ink">Pick your name</h1>
         <p className="mt-3 text-muted">

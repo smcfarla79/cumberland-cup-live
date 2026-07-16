@@ -1,5 +1,6 @@
 "use client";
 
+import { BrandLogo } from "@/components/brand-logo";
 import type { Round } from "@/lib/types";
 
 type RoundPickerProps = {
@@ -24,10 +25,8 @@ export function RoundPicker({
       <header className="animate-rise">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <p className="text-sm tracking-[0.18em] text-fairway uppercase">
-              Cumberland Cup
-            </p>
-            <h1 className="font-display mt-2 text-4xl text-ink">
+            <BrandLogo size={72} className="mb-5 ring-1 ring-mist" />
+            <h1 className="font-display text-4xl text-ink">
               Hello, {playerName.split(" ")[0]}
             </h1>
             <p className="mt-3 text-muted">

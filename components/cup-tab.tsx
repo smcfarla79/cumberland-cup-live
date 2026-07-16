@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState, useEffectEvent } from "react";
+import { BrandLogo } from "@/components/brand-logo";
 import { TeamSwatch } from "@/components/team-swatch";
 import { createClient } from "@/lib/supabase/client";
 import type { Match, MatchPlayer, Player, Round, Team } from "@/lib/types";
@@ -314,11 +315,16 @@ export function CupTab({ tournamentId, teams, rounds, players }: CupTabProps) {
   return (
     <section className="mx-auto w-full max-w-2xl px-5 py-6">
       <div className="animate-rise">
-        <p className="text-xs tracking-[0.22em] text-fairway uppercase">
-          Live standings
-        </p>
-        <h1 className="font-display mt-2 text-3xl text-ink">The Cup</h1>
-        <p className="mt-2 text-sm text-muted">
+        <div className="flex items-center gap-4">
+          <BrandLogo size={64} className="shrink-0 ring-1 ring-mist" />
+          <div>
+            <p className="text-xs tracking-[0.22em] text-fairway uppercase">
+              Live standings
+            </p>
+            <h1 className="font-display mt-1 text-3xl text-ink">The Cup</h1>
+          </div>
+        </div>
+        <p className="mt-3 text-sm text-muted">
           First to {CUP_TARGET}. Wins take full points; halves are split.
         </p>
       </div>
@@ -346,9 +352,12 @@ export function CupTab({ tournamentId, teams, rounds, players }: CupTabProps) {
             </p>
           </div>
 
-          <div className="text-center">
-            <p className="font-display text-2xl text-gold sm:text-3xl">–</p>
-            <p className="mt-2 text-[10px] tracking-[0.2em] text-mist/70 uppercase">
+          <div className="flex flex-col items-center text-center">
+            <BrandLogo
+              size={52}
+              className="mb-2 ring-1 ring-white/25"
+            />
+            <p className="text-[10px] tracking-[0.2em] text-mist/70 uppercase">
               of {CUP_TARGET}
             </p>
           </div>

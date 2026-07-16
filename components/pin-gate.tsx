@@ -1,5 +1,6 @@
 "use client";
 
+import { BrandLogo } from "@/components/brand-logo";
 import { useState } from "react";
 
 type PinGateProps = {
@@ -34,12 +35,16 @@ export function PinGate({ tournamentName, expectedPin, onSuccess }: PinGateProps
       />
 
       <div className="relative mx-auto w-full max-w-md animate-rise">
-        <p className="mb-3 text-sm tracking-[0.22em] text-gold uppercase">
+        <div className="mb-8 flex justify-center sm:justify-start">
+          <BrandLogo
+            size={176}
+            priority
+            className="shadow-[0_12px_40px_rgba(0,0,0,0.35)] ring-1 ring-white/20"
+          />
+        </div>
+        <p className="text-sm tracking-[0.22em] text-gold uppercase">
           Sewanee · 2026
         </p>
-        <h1 className="font-display text-5xl leading-none text-fog sm:text-6xl">
-          Cumberland Cup
-        </h1>
         <p className="mt-4 max-w-sm text-base leading-relaxed text-mist/90">
           Live scoring for {tournamentName}. Enter the weekend PIN to continue.
         </p>
