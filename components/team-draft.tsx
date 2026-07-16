@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState, useEffectEvent } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { TeamSwatch } from "@/components/team-swatch";
 import type { Player, Team, TeamAssignment } from "@/lib/types";
 
 const TEAM_CAPACITY = 10;
@@ -133,7 +134,7 @@ export function TeamDraft({
           onClick={onBack}
           className="text-sm text-muted hover:text-ink"
         >
-          ← Back to rounds
+          ← Back
         </button>
         <h1 className="font-display mt-3 text-4xl text-ink">Draft night</h1>
         <p className="mt-3 text-muted">
@@ -148,11 +149,7 @@ export function TeamDraft({
             <div key={team.id} className="border border-mist bg-white p-4">
               <div className="flex items-center justify-between gap-3">
                 <div className="flex items-center gap-2">
-                  <span
-                    className="h-3 w-3 rounded-full"
-                    style={{ backgroundColor: team.color ?? "#2f6b4f" }}
-                    aria-hidden
-                  />
+                  <TeamSwatch color={team.color} className="h-3 w-3" />
                   <h2 className="text-lg font-semibold text-ink">{team.name}</h2>
                 </div>
                 <span className="text-sm text-muted">

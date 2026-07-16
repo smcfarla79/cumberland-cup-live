@@ -76,9 +76,10 @@ on conflict do nothing;
 
 -- Empty teams for draft night (assign players later in the app)
 insert into public.teams (id, tournament_id, name, color) values
-  ('00000000-0000-4000-8000-000000000201', '00000000-0000-4000-8000-000000000010', 'Team A', '#1d4ed8'),
-  ('00000000-0000-4000-8000-000000000202', '00000000-0000-4000-8000-000000000010', 'Team B', '#b91c1c')
-on conflict (tournament_id, name) do nothing;
+  ('00000000-0000-4000-8000-000000000201', '00000000-0000-4000-8000-000000000010', 'Team A', '#582C83'),
+  ('00000000-0000-4000-8000-000000000202', '00000000-0000-4000-8000-000000000010', 'Team B', '#FFFFFF')
+on conflict (tournament_id, name) do update
+set color = excluded.color;
 
 -- Planned rounds from the Source of Truth
 -- scoring_format is simplified for v1: stroke | match
@@ -87,7 +88,7 @@ insert into public.rounds (id, tournament_id, name, day_number, play_date, scori
   (
     '00000000-0000-4000-8000-000000000301',
     '00000000-0000-4000-8000-000000000010',
-    'Thursday Seeding — 9-hole individual stroke',
+    'Thursday Seeding — Front 9 · individual stroke',
     1,
     '2026-07-30',
     'stroke'
@@ -95,7 +96,7 @@ insert into public.rounds (id, tournament_id, name, day_number, play_date, scori
   (
     '00000000-0000-4000-8000-000000000302',
     '00000000-0000-4000-8000-000000000010',
-    'Friday AM — 9-hole 2-man best ball (1 pt)',
+    'Friday AM — Front 9 · 2-man best ball (1 pt)',
     2,
     '2026-07-31',
     'match'
@@ -103,7 +104,7 @@ insert into public.rounds (id, tournament_id, name, day_number, play_date, scori
   (
     '00000000-0000-4000-8000-000000000303',
     '00000000-0000-4000-8000-000000000010',
-    'Friday PM — 9-hole scramble/shamble (1 pt)',
+    'Friday PM — Back 9 · scramble/shamble (1 pt)',
     2,
     '2026-07-31',
     'match'
@@ -111,7 +112,7 @@ insert into public.rounds (id, tournament_id, name, day_number, play_date, scori
   (
     '00000000-0000-4000-8000-000000000304',
     '00000000-0000-4000-8000-000000000010',
-    'Saturday AM — 9-hole 2-man scramble (1 pt)',
+    'Saturday AM — Front 9 · 2-man scramble (1 pt)',
     3,
     '2026-08-01',
     'match'
@@ -119,7 +120,7 @@ insert into public.rounds (id, tournament_id, name, day_number, play_date, scori
   (
     '00000000-0000-4000-8000-000000000305',
     '00000000-0000-4000-8000-000000000010',
-    'Saturday — 18-hole 1v1 match play (2 pts)',
+    'Saturday — Singles match play (2 pts)',
     3,
     '2026-08-01',
     'match'

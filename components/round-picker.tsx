@@ -7,6 +7,7 @@ type RoundPickerProps = {
   rounds: Round[];
   onSelect: (round: Round) => void;
   onOpenDraft: () => void;
+  onOpenBoard: () => void;
   onSignOut: () => void;
 };
 
@@ -15,6 +16,7 @@ export function RoundPicker({
   rounds,
   onSelect,
   onOpenDraft,
+  onOpenBoard,
   onSignOut,
 }: RoundPickerProps) {
   return (
@@ -29,7 +31,7 @@ export function RoundPicker({
               Hello, {playerName.split(" ")[0]}
             </h1>
             <p className="mt-3 text-muted">
-              Choose a round to score, or set teams after the draft.
+              Score a round, set teams, or watch the live board.
             </p>
           </div>
           <button
@@ -42,18 +44,30 @@ export function RoundPicker({
         </div>
       </header>
 
-      <button
-        type="button"
-        onClick={onOpenDraft}
-        className="mt-8 w-full border border-pine bg-pine px-4 py-4 text-left text-fog transition hover:brightness-110 animate-rise"
-      >
-        <span className="block text-xs tracking-wide text-gold uppercase">
-          Draft night
-        </span>
-        <span className="mt-1 block text-base font-semibold">
-          Assign Team A &amp; Team B
-        </span>
-      </button>
+      <div className="mt-8 grid gap-3 animate-rise">
+        <button
+          type="button"
+          onClick={onOpenBoard}
+          className="w-full border border-pine bg-pine px-4 py-4 text-left text-fog transition hover:brightness-110"
+        >
+          <span className="block text-xs tracking-wide text-gold uppercase">
+            Spectator
+          </span>
+          <span className="mt-1 block text-base font-semibold">Live board</span>
+        </button>
+        <button
+          type="button"
+          onClick={onOpenDraft}
+          className="w-full border border-mist bg-white px-4 py-4 text-left transition hover:border-fairway"
+        >
+          <span className="block text-xs tracking-wide text-fairway uppercase">
+            Draft night
+          </span>
+          <span className="mt-1 block text-base font-semibold text-ink">
+            Assign Team A &amp; Team B
+          </span>
+        </button>
+      </div>
 
       <ul className="mt-6 space-y-3 animate-fade">
         {rounds.map((round) => (

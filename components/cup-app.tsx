@@ -1,35 +1,39 @@
 "use client";
 
 import { useEffect, useState, useEffectEvent } from "react";
+import { AppTabs } from "@/components/app-tabs";
+import { CourseTab } from "@/components/course-tab";
+import { CupTab } from "@/components/cup-tab";
+import { MatchesTab } from "@/components/matches-tab";
 import { PinGate } from "@/components/pin-gate";
 import { PlayerPicker } from "@/components/player-picker";
-import { RoundPicker } from "@/components/round-picker";
-import { ScoreEntry } from "@/components/score-entry";
-import { TeamDraft } from "@/components/team-draft";
+import { ScoreTab } from "@/components/score-tab";
+import { TeamsTab } from "@/components/teams-tab";
 import { clearSession, getSession, setSession } from "@/lib/session";
 import { createClient } from "@/lib/supabase/client";
-import type { Hole, Player, Round, Team, Tournament } from "@/lib/types";
+import type {
+  AppTab,
+  Hole,
+  Player,
+  Round,
+  Team,
+  Tournament,
+} from "@/lib/types";
 
-type Step =
-  | "loading"
-  | "pin"
-  | "player"
-  | "rounds"
-  | "draft"
-  | "score"
-  | "error";
+type Gate = "loading" | "pin" | "player" | "app" | "error";
 
 export function CupApp() {
-  const [step, setStep] = useState<Step>("loading");
+  const [gate, setGate] = useState<Gate>("loading");
+  const [tab, setTab] = useState<AppTab>("teams");
   const [error, setError] = useState("");
   const [tournament, setTournament] = useState<Tournament | null>(null);
   const [players, setPlayers] = useState<Player[]>([]);
   const [rounds, setRounds] = useState<Round[]>([]);
   const [teams, setTeams] = useState<Team[]>([]);
   const [holes, setHoles] = useState<Hole[]>([]);
+  const [courseName, setCourseName] = useState("The Course at Sewanee");
   const [session, setSessionState] = useState(getSession());
   const [pinUnlocked, setPinUnlocked] = useState(false);
-  const [activeRound, setActiveRound] = useState<Round | null>(null);
 
   const bootstrap = useEffectEvent(async () => {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -42,7 +46,7 @@ export function CupApp() {
       setError(
         "Your .env.local Supabase URL looks missing or incomplete. Copy the Project URL from Supabase → Project Settings → API.",
       );
-      setStep("error");
+      setGate("error");
       return;
     }
 
@@ -61,7 +65,7 @@ export function CupApp() {
         () =>
           reject(
             new Error(
-              "Timed out reaching Supabase. Double-check NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY in .env.local, then restart npm run dev.",
+              "Timed out reaching Supabase. Double-check your Supabase URL and anon key, then restart or redeploy.",
             ),
           ),
         10000,
@@ -76,7 +80,7 @@ export function CupApp() {
       tournamentError = result.error;
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to reach Supabase.");
-      setStep("error");
+      setGate("error");
       return;
     }
 
@@ -85,7 +89,7 @@ export function CupApp() {
         tournamentError?.message ??
           "No active tournament found. Check your Supabase seed data.",
       );
-      setStep("error");
+      setGate("error");
       return;
     }
 
@@ -93,24 +97,27 @@ export function CupApp() {
     setTournament(activeTournament);
 
     const [
-      { data: playerRows },
+      playersResponse,
       { data: roundRows },
-      { data: holeRows },
+      holesResponse,
       { data: teamRows },
+      { data: courseRow },
     ] = await Promise.all([
       supabase
         .from("tournament_players")
-        .select("player:players(id, display_name)")
+        .select("handicap, is_admin, player:players(id, display_name)")
         .eq("tournament_id", activeTournament.id),
       supabase
         .from("rounds")
-        .select("id, tournament_id, name, day_number, play_date, scoring_format")
+        .select(
+          "id, tournament_id, name, day_number, play_date, scoring_format, hole_count, nine_label, play_format",
+        )
         .eq("tournament_id", activeTournament.id)
         .order("day_number")
         .order("play_date"),
       supabase
         .from("holes")
-        .select("id, hole_number, par, handicap_index, yards")
+        .select("id, hole_number, par, handicap_index, yards, yards_purple")
         .eq("course_id", activeTournament.course_id)
         .order("hole_number"),
       supabase
@@ -118,22 +125,82 @@ export function CupApp() {
         .select("id, tournament_id, name, color")
         .eq("tournament_id", activeTournament.id)
         .order("name"),
+      supabase
+        .from("courses")
+        .select("name")
+        .eq("id", activeTournament.course_id)
+        .maybeSingle(),
     ]);
+
+    let playerRows = playersResponse.data;
+    if (playersResponse.error || !playerRows) {
+      const fallbackPlayers = await supabase
+        .from("tournament_players")
+        .select("player:players(id, display_name)")
+        .eq("tournament_id", activeTournament.id);
+      playerRows = (fallbackPlayers.data ?? []).map((row) => ({
+        ...row,
+        handicap: null,
+        is_admin: false,
+      }));
+    }
+
+    let holeRows = holesResponse.data;
+    if (holesResponse.error || !holeRows) {
+      const fallback = await supabase
+        .from("holes")
+        .select("id, hole_number, par, handicap_index, yards")
+        .eq("course_id", activeTournament.course_id)
+        .order("hole_number");
+      holeRows = (fallback.data ?? []).map((hole) => ({
+        ...hole,
+        yards_purple: null,
+      }));
+    }
 
     const loadedPlayers =
       (playerRows ?? [])
         .map((row) => {
-          const player = row.player as Player | Player[] | null;
-          if (Array.isArray(player)) return player[0] ?? null;
-          return player;
+          const raw = row as {
+            handicap?: number | null;
+            is_admin?: boolean | null;
+            player: Player | Player[] | null;
+          };
+          const base = Array.isArray(raw.player)
+            ? raw.player[0] ?? null
+            : raw.player;
+          if (!base) return null;
+          return {
+            id: base.id,
+            display_name: base.display_name,
+            handicap: raw.handicap ?? null,
+            is_admin: Boolean(raw.is_admin),
+          } satisfies Player;
         })
         .filter((p): p is Player => Boolean(p))
         .sort((a, b) => a.display_name.localeCompare(b.display_name)) ?? [];
 
     setPlayers(loadedPlayers);
-    setRounds((roundRows as Round[]) ?? []);
-    setHoles((holeRows as Hole[]) ?? []);
+    setRounds(
+      ((roundRows as Round[]) ?? []).map((round) => ({
+        ...round,
+        hole_count: round.hole_count === 18 ? 18 : 9,
+        nine_label: round.nine_label ?? null,
+        play_format: round.play_format ?? null,
+      })),
+    );
+    setHoles(
+      ((holeRows as Hole[]) ?? []).map((hole) => ({
+        ...hole,
+        yards: hole.yards == null ? null : Number(hole.yards),
+        yards_purple:
+          hole.yards_purple == null ? null : Number(hole.yards_purple),
+      })),
+    );
     setTeams((teamRows as Team[]) ?? []);
+    if (courseRow && "name" in courseRow && typeof courseRow.name === "string") {
+      setCourseName(courseRow.name);
+    }
 
     const existing = getSession();
     if (
@@ -143,11 +210,11 @@ export function CupApp() {
     ) {
       setSessionState(existing);
       setPinUnlocked(true);
-      setStep("rounds");
+      setGate("app");
       return;
     }
 
-    setStep("pin");
+    setGate("pin");
   });
 
   useEffect(() => {
@@ -156,7 +223,7 @@ export function CupApp() {
 
   function handlePinSuccess() {
     setPinUnlocked(true);
-    setStep("player");
+    setGate("player");
   }
 
   function handlePlayerSelect(player: Player) {
@@ -168,18 +235,18 @@ export function CupApp() {
     };
     setSession(next);
     setSessionState(next);
-    setStep("rounds");
+    setGate("app");
+    setTab("teams");
   }
 
   function handleSignOut() {
     clearSession();
     setSessionState(null);
     setPinUnlocked(false);
-    setActiveRound(null);
-    setStep("pin");
+    setGate("pin");
   }
 
-  if (step === "loading") {
+  if (gate === "loading") {
     return (
       <div className="atmosphere flex min-h-dvh items-center justify-center text-mist">
         Loading the Cup…
@@ -187,21 +254,21 @@ export function CupApp() {
     );
   }
 
-  if (step === "error") {
+  if (gate === "error") {
     return (
       <div className="mx-auto flex min-h-dvh max-w-md flex-col justify-center px-6 text-ink">
         <h1 className="font-display text-3xl">Can’t connect yet</h1>
         <p className="mt-3 text-muted">{error}</p>
         <p className="mt-4 text-sm text-muted">
           On your computer: check `.env.local`, then restart `npm run dev`. On
-          the live Vercel site: set Environment Variables to the same Supabase
-          URL and anon key (URL must not end with `/rest/v1/`), then Redeploy.
+          the live Vercel site: set Environment Variables correctly, then
+          Redeploy.
         </p>
       </div>
     );
   }
 
-  if (step === "pin" || !pinUnlocked || !tournament) {
+  if (gate === "pin" || !pinUnlocked || !tournament) {
     return (
       <PinGate
         tournamentName={tournament?.name ?? "The Cumberland Cup"}
@@ -211,46 +278,65 @@ export function CupApp() {
     );
   }
 
-  if (step === "player" || !session) {
+  if (gate === "player" || !session) {
     return <PlayerPicker players={players} onSelect={handlePlayerSelect} />;
   }
 
-  if (step === "draft") {
-    return (
-      <TeamDraft
-        tournamentId={tournament.id}
-        players={players}
-        teams={teams}
-        onBack={() => setStep("rounds")}
-      />
-    );
-  }
-
-  if (step === "score" && activeRound) {
-    return (
-      <ScoreEntry
-        round={activeRound}
-        playerId={session.playerId}
-        playerName={session.playerName}
-        holes={holes}
-        onBack={() => {
-          setActiveRound(null);
-          setStep("rounds");
-        }}
-      />
-    );
-  }
-
   return (
-    <RoundPicker
-      playerName={session.playerName}
-      rounds={rounds}
-      onSelect={(round) => {
-        setActiveRound(round);
-        setStep("score");
-      }}
-      onOpenDraft={() => setStep("draft")}
-      onSignOut={handleSignOut}
-    />
+    <div className="min-h-dvh bg-fog">
+      <AppTabs
+        active={tab}
+        onChange={setTab}
+        playerName={session.playerName}
+        onSignOut={handleSignOut}
+      />
+      {tab === "teams" ? (
+        <TeamsTab
+          tournamentId={tournament.id}
+          players={players}
+          teams={teams}
+          isAdmin={
+            players.find((p) => p.id === session.playerId)?.is_admin === true
+          }
+          onPlayersChange={setPlayers}
+          onTeamsChange={setTeams}
+        />
+      ) : null}
+      {tab === "matches" ? (
+        <MatchesTab
+          players={players}
+          teams={teams}
+          rounds={rounds}
+          holes={holes}
+          isAdmin={
+            players.find((p) => p.id === session.playerId)?.is_admin === true
+          }
+        />
+      ) : null}
+      {tab === "cup" ? (
+        <CupTab
+          tournamentId={tournament.id}
+          teams={teams}
+          rounds={rounds}
+          players={players}
+        />
+      ) : null}
+      {tab === "score" ? (
+        <ScoreTab
+          sessionPlayerId={session.playerId}
+          sessionPlayerName={session.playerName}
+          players={players}
+          rounds={rounds}
+          holes={holes}
+          teams={teams}
+          isAdmin={
+            players.find((p) => p.id === session.playerId)?.is_admin === true
+          }
+        />
+      ) : null}
+      {tab === "course" ? (
+        <CourseTab courseName={courseName} holes={holes} />
+      ) : null}
+    </div>
   );
 }
