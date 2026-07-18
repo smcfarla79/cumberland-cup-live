@@ -9,7 +9,7 @@ import { PinGate } from "@/components/pin-gate";
 import { PlayTab } from "@/components/play-tab";
 import { PlayerPicker } from "@/components/player-picker";
 import { TeamsTab } from "@/components/teams-tab";
-import { clearSession, getSession, setSession } from "@/lib/session";
+import { clearSession, getSession, isSessionValid, setSession } from "@/lib/session";
 import { createClient } from "@/lib/supabase/client";
 import type {
   AppTab,
@@ -204,11 +204,8 @@ export function CupApp() {
     }
 
     const existing = getSession();
-    if (
-      existing &&
-      existing.tournamentId === activeTournament.id &&
-      loadedPlayers.some((p) => p.id === existing.playerId)
-    ) {
+    const playerIds = loadedPlayers.map((p) => p.id);
+    if (isSessionValid(existing, activeTournament.id, playerIds)) {
       setSessionState(existing);
       setPinUnlocked(true);
       setGate("app");
@@ -224,6 +221,17 @@ export function CupApp() {
 
   function handlePinSuccess() {
     setPinUnlocked(true);
+    if (!tournament) {
+      setGate("player");
+      return;
+    }
+    const existing = getSession();
+    const playerIds = players.map((p) => p.id);
+    if (isSessionValid(existing, tournament.id, playerIds)) {
+      setSessionState(existing);
+      setGate("app");
+      return;
+    }
     setGate("player");
   }
 
@@ -237,7 +245,6 @@ export function CupApp() {
     setSession(next);
     setSessionState(next);
     setGate("app");
-    setTab("cup");
   }
 
   function handleSignOut() {

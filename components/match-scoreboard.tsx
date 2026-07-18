@@ -11,6 +11,7 @@ import {
   toParLabel,
 } from "@/lib/scoring";
 import { createClient } from "@/lib/supabase/client";
+import { teamAccentColor } from "@/lib/team-colors";
 import type {
   Hole,
   HoleScore,
@@ -179,7 +180,17 @@ export function MatchScoreboard({
     return (
       <div className="border border-mist bg-white p-3">
         <div className="mb-2 flex items-center justify-between gap-2">
-          <p className="text-sm font-semibold text-ink">{team.name}</p>
+          <p
+            className="text-sm font-semibold"
+            style={{
+              color: teamAccentColor(
+                team.color,
+                team.id === teamA?.id ? "gold" : "green",
+              ),
+            }}
+          >
+            {team.name}
+          </p>
           {best != null ? (
             <p className="text-xs font-semibold text-fairway">
               Best ball {best} · {toParLabel(best, hole.par)}
@@ -195,6 +206,10 @@ export function MatchScoreboard({
               hole.handicap_index,
             );
             const isYou = mp.player_id === sessionPlayerId;
+            const nameColor = teamAccentColor(
+              team.color,
+              team.id === teamA?.id ? "gold" : "green",
+            );
             return (
               <li
                 key={mp.player_id}
@@ -206,7 +221,10 @@ export function MatchScoreboard({
               >
                 <div className="flex items-start justify-between gap-2">
                   <div>
-                    <p className="text-sm font-medium text-ink">
+                    <p
+                      className="text-sm font-medium"
+                      style={{ color: nameColor }}
+                    >
                       {player?.display_name ?? "Unknown"}
                       {isYou ? " · you" : ""}
                       {player?.handicap != null ? ` · HCP ${player.handicap}` : ""}

@@ -452,6 +452,19 @@ export function ScoreTab({
                     status={status}
                     aLeading={(standing?.lead ?? 0) > 0}
                     bLeading={(standing?.lead ?? 0) < 0}
+                    isFinal={
+                      match.status === "complete" ||
+                      Boolean(standing?.finalResult)
+                    }
+                    finalWinner={
+                      match.is_halved
+                        ? "halve"
+                        : match.winning_team_id === teamA.id
+                          ? "team_a"
+                          : match.winning_team_id === teamB.id
+                            ? "team_b"
+                            : standing?.finalResult ?? null
+                    }
                     onClick={() => setSelectedMatchId(match.id)}
                   />
                 </li>

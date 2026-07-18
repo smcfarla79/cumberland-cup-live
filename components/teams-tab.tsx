@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState, useEffectEvent } from "react";
 import { TeamDraft } from "@/components/team-draft";
 import { TeamSwatch } from "@/components/team-swatch";
 import { createClient } from "@/lib/supabase/client";
+import { teamAccentColor } from "@/lib/team-colors";
 import type { Player, Team, TeamAssignment } from "@/lib/types";
 
 type TeamsTabProps = {
@@ -306,7 +307,7 @@ export function TeamsTab({
       ) : null}
 
       <div className="mt-6 grid gap-4 sm:grid-cols-2 animate-fade">
-        {sortedTeams.map((team) => {
+        {sortedTeams.map((team, teamIndex) => {
           const members = players
             .filter((p) =>
               assignments.some(
@@ -314,13 +315,19 @@ export function TeamsTab({
               ),
             )
             .sort((a, b) => a.display_name.localeCompare(b.display_name));
+          const accent = teamAccentColor(
+            team.color,
+            teamIndex === 0 ? "gold" : "green",
+          );
 
           return (
             <div key={team.id} className="border border-mist bg-white p-4">
               <div className="flex items-center justify-between gap-2">
                 <div className="flex items-center gap-2">
-                  <TeamSwatch color={team.color} className="h-3 w-3" />
-                  <h2 className="text-lg font-semibold text-ink">{team.name}</h2>
+                  <TeamSwatch color={accent} className="h-3 w-3" />
+                  <h2 className="text-lg font-semibold" style={{ color: accent }}>
+                    {team.name}
+                  </h2>
                 </div>
                 <span className="text-sm text-muted">{members.length}</span>
               </div>
@@ -331,9 +338,9 @@ export function TeamsTab({
                   members.map((player) => (
                     <li
                       key={player.id}
-                      className="flex items-center justify-between gap-2 text-sm text-ink"
+                      className="flex items-center justify-between gap-2 text-sm"
                     >
-                      <span>{player.display_name}</span>
+                      <span style={{ color: accent }}>{player.display_name}</span>
                       <span className="text-xs text-muted">
                         {player.handicap == null
                           ? "HCP —"

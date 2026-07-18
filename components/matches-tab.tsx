@@ -8,6 +8,7 @@ import {
 } from "@/lib/match-play";
 import { formatLabel, resolvePlayFormat } from "@/lib/scoring";
 import { createClient } from "@/lib/supabase/client";
+import { teamAccentColor } from "@/lib/team-colors";
 import type {
   Hole,
   Match,
@@ -643,12 +644,28 @@ export function MatchesTab({
                     );
                     return (
                       <div key={team.id}>
-                        <p className="text-xs text-muted">{team.name}</p>
+                        <p
+                          className="text-xs font-semibold"
+                          style={{
+                            color: teamAccentColor(
+                              team.color,
+                              team.id === teamA?.id ? "gold" : "green",
+                            ),
+                          }}
+                        >
+                          {team.name}
+                        </p>
                         <ul className="mt-1 space-y-1">
                           {side.map((player) => (
                             <li
                               key={player.player_id}
-                              className="flex items-center justify-between gap-2 text-sm text-ink"
+                              className="flex items-center justify-between gap-2 text-sm"
+                              style={{
+                                color: teamAccentColor(
+                                  team.color,
+                                  team.id === teamA?.id ? "gold" : "green",
+                                ),
+                              }}
                             >
                               <span>{playerLabel(player.player_id)}</span>
                               {adjusting ? (

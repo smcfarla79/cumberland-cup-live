@@ -9,14 +9,21 @@ export const HOUSES = [
   {
     name: "The Sommer House",
     line: "460 Greens View Road, Sewanee, TN 37383",
-    note: "Main house",
   },
   {
     name: "The West House",
     line: "435 Florida Ave, Sewanee, TN 37383",
-    note: "Overflow sleeping only",
   },
 ] as const;
+
+/** Deep links to open an address in Apple Maps or Google Maps. */
+export function mapsLinksForAddress(address: string) {
+  const q = encodeURIComponent(address);
+  return {
+    apple: `https://maps.apple.com/?q=${q}`,
+    google: `https://www.google.com/maps/search/?api=1&query=${q}`,
+  };
+}
 
 export const WEEKEND_DATES = "Thursday, July 30 – Sunday, August 2, 2026";
 

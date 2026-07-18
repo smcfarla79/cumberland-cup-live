@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState, useEffectEvent } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { TeamSwatch } from "@/components/team-swatch";
+import { teamAccentColor } from "@/lib/team-colors";
 import type { Player, Team, TeamAssignment } from "@/lib/types";
 
 const TEAM_CAPACITY = 10;
@@ -143,14 +144,20 @@ export function TeamDraft({
       </header>
 
       <div className="mt-8 space-y-6 animate-fade">
-        {sortedTeams.map((team) => {
+        {sortedTeams.map((team, teamIndex) => {
           const members = membersFor(team.id);
+          const accent = teamAccentColor(
+            team.color,
+            teamIndex === 0 ? "gold" : "green",
+          );
           return (
             <div key={team.id} className="border border-mist bg-white p-4">
               <div className="flex items-center justify-between gap-3">
                 <div className="flex items-center gap-2">
-                  <TeamSwatch color={team.color} className="h-3 w-3" />
-                  <h2 className="text-lg font-semibold text-ink">{team.name}</h2>
+                  <TeamSwatch color={accent} className="h-3 w-3" />
+                  <h2 className="text-lg font-semibold" style={{ color: accent }}>
+                    {team.name}
+                  </h2>
                 </div>
                 <span className="text-sm text-muted">
                   {members.length}/{TEAM_CAPACITY}
@@ -165,7 +172,7 @@ export function TeamDraft({
                       key={player.id}
                       className="flex items-center justify-between gap-3 border border-mist px-3 py-2"
                     >
-                      <span className="text-sm text-ink">
+                      <span className="text-sm" style={{ color: accent }}>
                         {player.display_name}
                       </span>
                       <button

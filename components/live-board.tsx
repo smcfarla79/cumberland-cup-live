@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState, useEffectEvent } from "react";
 import { BrandLogo } from "@/components/brand-logo";
 import { createClient } from "@/lib/supabase/client";
 import { TeamSwatch } from "@/components/team-swatch";
+import { teamAccentColor } from "@/lib/team-colors";
 import type { Player, Round, Team, TeamAssignment } from "@/lib/types";
 
 type LiveBoardProps = {
@@ -145,17 +146,23 @@ export function LiveBoard({
       </label>
 
       <div className="mt-6 grid gap-4 sm:grid-cols-2 animate-fade">
-        {sortedTeams.map((team) => {
+        {sortedTeams.map((team, teamIndex) => {
           const stats = statsForTeam(team.id);
           const teamTotal = stats.reduce((sum, s) => sum + s.total, 0);
           const holesIn = stats.reduce((sum, s) => sum + s.holesPlayed, 0);
+          const accent = teamAccentColor(
+            team.color,
+            teamIndex === 0 ? "gold" : "green",
+          );
 
           return (
             <div key={team.id} className="border border-mist bg-white p-4">
               <div className="flex items-start justify-between gap-3">
                 <div className="flex items-center gap-2">
-                  <TeamSwatch color={team.color} className="h-3 w-3" />
-                  <h2 className="text-lg font-semibold text-ink">{team.name}</h2>
+                  <TeamSwatch color={accent} className="h-3 w-3" />
+                  <h2 className="text-lg font-semibold" style={{ color: accent }}>
+                    {team.name}
+                  </h2>
                 </div>
                 <div className="text-right">
                   <p className="font-display text-3xl text-ink">{teamTotal || "—"}</p>
@@ -172,7 +179,7 @@ export function LiveBoard({
                       key={player.id}
                       className="flex items-center justify-between gap-3 border-t border-mist pt-2 text-sm"
                     >
-                      <span className="text-ink">{player.display_name}</span>
+                      <span style={{ color: accent }}>{player.display_name}</span>
                       <span className="tabular-nums text-muted">
                         {holesPlayed === 0
                           ? "—"

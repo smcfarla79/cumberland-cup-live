@@ -16,7 +16,8 @@ export function PlayerPicker({ players, onSelect }: PlayerPickerProps) {
         <p className="text-sm tracking-[0.18em] text-fairway uppercase">Who are you?</p>
         <h1 className="font-display mt-2 text-4xl text-ink">Pick your name</h1>
         <p className="mt-3 text-muted">
-          You’ll only be able to enter scores for yourself.
+          You’ll only be able to enter scores for yourself. We remember your
+          pick on this device for next time.
         </p>
       </div>
 

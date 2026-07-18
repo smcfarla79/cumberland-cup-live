@@ -1,23 +1,18 @@
 "use client";
 
 import { TeamSwatch } from "@/components/team-swatch";
+import {
+  TEAM_GREEN,
+  isLightTeamColor,
+  teamAccentColor,
+  teamWashColor,
+} from "@/lib/team-colors";
 import type { MatchPlayer, Player, Team } from "@/lib/types";
 
 function shortPlayerName(name: string) {
   const parts = name.trim().split(/\s+/);
   if (parts.length === 1) return parts[0];
   return `${parts[0][0]}. ${parts[parts.length - 1]}`;
-}
-
-function isLightColor(color: string | null | undefined) {
-  const value = (color ?? "").toLowerCase();
-  return value === "#ffffff" || value === "#fff" || value === "white";
-}
-
-/** Soft wash from a hex color (6-digit). */
-function wash(color: string, alphaHex = "14") {
-  if (/^#[0-9a-fA-F]{6}$/.test(color)) return `${color}${alphaHex}`;
-  return `${color}14`;
 }
 
 type LiveMatchCardProps = {
@@ -33,6 +28,10 @@ type LiveMatchCardProps = {
   status: string;
   aLeading: boolean;
   bLeading: boolean;
+  /** When true, only the winning side is highlighted (loser stays white). */
+  isFinal?: boolean;
+  /** Cup result when final: team_a, team_b, or halve. */
+  finalWinner?: "team_a" | "team_b" | "halve" | null;
   onClick: () => void;
 };
 
@@ -49,12 +48,13 @@ export function LiveMatchCard({
   status,
   aLeading,
   bLeading,
+  isFinal = false,
+  finalWinner = null,
   onClick,
 }: LiveMatchCardProps) {
-  const colorA = teamA.color ?? "#c4a35a";
-  const colorB = teamB.color ?? "#16352a";
-  const bIsLight = isLightColor(colorB);
-  const aIsLight = isLightColor(colorA);
+  const colorA = teamAccentColor(teamA.color, "gold");
+  const colorB = teamAccentColor(teamB.color, "green");
+  const aIsLight = isLightTeamColor(colorA);
 
   const namesA = sideA.map((p) =>
     shortPlayerName(
@@ -83,8 +83,15 @@ export function LiveMatchCard({
         ? "Not started"
         : "Final";
 
-  const textA = aIsLight ? "#14201b" : colorA;
-  const textB = bIsLight ? "#14201b" : colorB;
+  const aWon = isFinal && finalWinner === "team_a";
+  const bWon = isFinal && finalWinner === "team_b";
+  const highlightA = aWon || (!isFinal && aLeading);
+  const highlightB = bWon || (!isFinal && bLeading);
+  const emphasizeA = highlightA;
+  const emphasizeB = highlightB;
+
+  const textA = highlightA ? colorA : "#14201b";
+  const textB = highlightB ? colorB : "#14201b";
 
   return (
     <button
@@ -109,7 +116,9 @@ export function LiveMatchCard({
 
       <div
         className="flex items-stretch gap-3 px-3 py-3"
-        style={{ backgroundColor: wash(colorA, "18") }}
+        style={{
+          backgroundColor: highlightA ? teamWashColor(colorA) : "#ffffff",
+        }}
       >
         <div
           className="w-1 shrink-0 self-stretch rounded-full"
@@ -135,7 +144,7 @@ export function LiveMatchCard({
                 key={name}
                 className={[
                   "truncate text-sm leading-snug",
-                  aLeading ? "font-semibold" : "font-medium",
+                  emphasizeA ? "font-semibold" : "font-medium",
                 ].join(" ")}
                 style={{ color: textA }}
               >
@@ -151,7 +160,11 @@ export function LiveMatchCard({
         <p
           className="font-display text-lg tracking-wide sm:text-xl"
           style={{
-            color: aLeading ? colorA : bLeading ? colorB : "#16352a",
+            color: highlightA
+              ? colorA
+              : highlightB
+                ? colorB
+                : TEAM_GREEN,
           }}
         >
           {statusDisplay}
@@ -162,37 +175,29 @@ export function LiveMatchCard({
       <div
         className="flex items-stretch gap-3 px-3 py-3"
         style={{
-          backgroundColor: bIsLight
-            ? "rgba(20, 32, 27, 0.04)"
-            : wash(colorB, "18"),
+          backgroundColor: highlightB ? teamWashColor(colorB) : "#ffffff",
         }}
       >
         <div
           className="w-1 shrink-0 self-stretch rounded-full"
-          style={{
-            backgroundColor: bIsLight ? "#ffffff" : colorB,
-            boxShadow: bIsLight
-              ? "inset 0 0 0 1px rgba(20, 32, 27, 0.28)"
-              : undefined,
-          }}
+          style={{ backgroundColor: colorB }}
           aria-hidden
         />
         <div className="min-w-0 flex-1">
           <div className="mb-1.5">
-            <TeamSwatch
-              color={bIsLight ? "#FFFFFF" : colorB}
-              className="h-2 w-2"
-            />
+            <TeamSwatch color={colorB} className="h-2 w-2" />
           </div>
           {namesB.length === 0 ? (
-            <p className="text-sm text-ink">—</p>
+            <p className="text-sm" style={{ color: textB }}>
+              —
+            </p>
           ) : (
             namesB.map((name) => (
               <p
                 key={name}
                 className={[
                   "truncate text-sm leading-snug",
-                  bLeading ? "font-semibold" : "font-medium",
+                  emphasizeB ? "font-semibold" : "font-medium",
                 ].join(" ")}
                 style={{ color: textB }}
               >

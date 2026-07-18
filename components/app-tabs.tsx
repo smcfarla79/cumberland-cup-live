@@ -36,7 +36,7 @@ export function AppTabs({ active, onChange, playerName, onSignOut }: AppTabsProp
           onClick={onSignOut}
           className="shrink-0 text-xs text-muted underline-offset-2 hover:text-ink hover:underline"
         >
-          Switch
+          Switch player
         </button>
       </div>
       <nav

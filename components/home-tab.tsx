@@ -6,8 +6,10 @@ import {
   fetchSewaneeWeather,
   formatForecastDay,
   SEWANEE_COORDS,
+  weatherSceneTheme,
   type WeatherSnapshot,
 } from "@/lib/sewanee-weather";
+import { WeatherBackdrop } from "@/components/weather-backdrop";
 import {
   ATTENDEES,
   COMPETITION,
@@ -19,7 +21,32 @@ import {
   SOCIAL,
   TEE_TIMES,
   WEEKEND_DATES,
+  mapsLinksForAddress,
 } from "@/lib/tournament-overview";
+
+function MapLinks({ address }: { address: string }) {
+  const { apple, google } = mapsLinksForAddress(address);
+  return (
+    <p className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-xs">
+      <a
+        href={apple}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="font-medium text-fairway underline-offset-2 hover:underline"
+      >
+        Apple Maps
+      </a>
+      <a
+        href={google}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="font-medium text-fairway underline-offset-2 hover:underline"
+      >
+        Google Maps
+      </a>
+    </p>
+  );
+}
 
 function Section({
   title,
@@ -60,6 +87,8 @@ export function HomeTab() {
     };
   }, []);
 
+  const theme = weather ? weatherSceneTheme(weather.weatherCode) : null;
+
   return (
     <div className="mx-auto w-full max-w-2xl px-4 py-5 sm:px-5">
       {/* Brand + weekend */}
@@ -74,7 +103,7 @@ export function HomeTab() {
               Welcome
             </p>
             <h1 className="font-display mt-1 text-3xl leading-tight sm:text-4xl">
-              The Cumberland Cup
+              The 2026 Cumberland Cup
             </h1>
             <p className="mt-2 text-sm text-mist/90">{WEEKEND_DATES}</p>
             <p className="mt-1 text-sm text-mist/75">{COURSE_ADDRESS.name}</p>
@@ -83,68 +112,104 @@ export function HomeTab() {
       </div>
 
       {/* Live weather */}
-      <section className="mt-5 border border-ink/15 bg-white px-4 py-4 animate-fade">
-        <div className="flex items-baseline justify-between gap-3">
-          <h2 className="text-xs font-semibold tracking-[0.16em] text-fairway uppercase">
-            Local weather
-          </h2>
-          <p className="text-[11px] text-muted">{SEWANEE_COORDS.label}</p>
-        </div>
+      <section
+        className="relative mt-5 overflow-hidden border border-ink/15 px-4 py-4 animate-fade"
+        style={{ background: theme?.background ?? "#ffffff" }}
+      >
+        {theme ? <WeatherBackdrop kind={theme.kind} /> : null}
+        <div className="relative">
+          <div className="flex items-baseline justify-between gap-3">
+            <h2
+              className="text-xs font-semibold tracking-[0.16em] uppercase"
+              style={{ color: theme?.heading }}
+            >
+              Local weather
+            </h2>
+            <p
+              className="text-[11px] font-semibold tracking-wide"
+              style={{ color: theme?.body ?? theme?.muted }}
+            >
+              {SEWANEE_COORDS.label}
+            </p>
+          </div>
 
-        {weatherError ? (
-          <p className="mt-3 text-sm text-muted">{weatherError}</p>
-        ) : !weather ? (
-          <p className="mt-3 text-sm text-muted">Loading conditions…</p>
-        ) : (
-          <>
-            <div className="mt-3 flex items-end justify-between gap-4">
-              <div>
-                <p className="font-display text-5xl leading-none tabular-nums text-ink">
-                  {weather.temperature}°
-                </p>
-                <p className="mt-1 text-sm font-medium text-ink">{weather.label}</p>
-                <p className="mt-0.5 text-xs text-muted">
-                  Feels like {weather.feelsLike}° · Wind {weather.windMph} mph ·{" "}
-                  {weather.humidity}% humidity
-                </p>
-              </div>
-            </div>
-
-            <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
-              {weather.daily.map((day) => (
-                <div
-                  key={day.date}
-                  className="border border-ink/10 bg-fog/60 px-2.5 py-2"
-                >
-                  <p className="text-[10px] tracking-wide text-muted uppercase">
-                    {formatForecastDay(day.date)}
+          {weatherError ? (
+            <p className="mt-3 text-sm text-muted">{weatherError}</p>
+          ) : !weather || !theme ? (
+            <p className="mt-3 text-sm text-muted">Loading conditions…</p>
+          ) : (
+            <>
+              <div className="mt-3 flex items-end justify-between gap-4">
+                <div>
+                  <p
+                    className="font-display text-5xl leading-none tabular-nums"
+                    style={{ color: theme.body }}
+                  >
+                    {weather.temperature}°
                   </p>
-                  <p className="mt-1 text-sm font-medium text-ink">
-                    {day.high}° / {day.low}°
+                  <p
+                    className="mt-1 text-sm font-medium"
+                    style={{ color: theme.body }}
+                  >
+                    {weather.label}
                   </p>
-                  <p className="mt-0.5 truncate text-[11px] text-muted">
-                    {day.label}
-                  </p>
-                  <p className="mt-0.5 text-[10px] text-muted">
-                    {day.precipChance}% rain
+                  <p className="mt-0.5 text-xs" style={{ color: theme.muted }}>
+                    Feels like {weather.feelsLike}° · Wind {weather.windMph} mph ·{" "}
+                    {weather.humidity}% humidity
                   </p>
                 </div>
-              ))}
-            </div>
-          </>
-        )}
+              </div>
+
+              <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
+                {weather.daily.map((day) => (
+                  <div
+                    key={day.date}
+                    className="px-2.5 py-2"
+                    style={{
+                      backgroundColor: theme.chipBg,
+                      border: `1px solid ${theme.chipBorder}`,
+                    }}
+                  >
+                    <p
+                      className="text-[10px] tracking-wide uppercase"
+                      style={{ color: theme.muted }}
+                    >
+                      {formatForecastDay(day.date)}
+                    </p>
+                    <p
+                      className="mt-1 text-sm font-medium"
+                      style={{ color: theme.body }}
+                    >
+                      {day.high}° / {day.low}°
+                    </p>
+                    <p
+                      className="mt-0.5 truncate text-[11px]"
+                      style={{ color: theme.muted }}
+                    >
+                      {day.label}
+                    </p>
+                    <p className="mt-0.5 text-[10px]" style={{ color: theme.muted }}>
+                      {day.precipChance}% rain
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+        </div>
       </section>
 
       <Section title="Where">
         <p className="text-sm font-medium text-ink">{COURSE_ADDRESS.name}</p>
         <p className="text-sm text-muted">{COURSE_ADDRESS.line}</p>
-        <ul className="mt-3 space-y-2">
+        <MapLinks address={COURSE_ADDRESS.line} />
+        <ul className="mt-4 space-y-3">
           {HOUSES.map((house) => (
             <li key={house.name} className="text-sm">
               <span className="font-medium text-ink">{house.name}</span>
-              <span className="text-muted"> · {house.note}</span>
               <br />
               <span className="text-muted">{house.line}</span>
+              <MapLinks address={house.line} />
             </li>
           ))}
         </ul>

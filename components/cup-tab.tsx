@@ -6,6 +6,10 @@ import { TeamSwatch } from "@/components/team-swatch";
 import { calculateMatchPlayStanding } from "@/lib/match-play";
 import { compactMatchStatus } from "@/lib/match-status";
 import { createClient } from "@/lib/supabase/client";
+import {
+  teamAccentColor,
+  teamWashColor,
+} from "@/lib/team-colors";
 import type { Hole, Match, MatchPlayer, Player, Round, Team } from "@/lib/types";
 
 const CUP_TARGET = 18;
@@ -25,11 +29,6 @@ type MatchWithPlayers = Match & { players: MatchPlayer[] };
 function formatPoints(value: number) {
   if (Number.isInteger(value)) return value.toFixed(0);
   return value.toFixed(1);
-}
-
-function isLightTeamColor(color: string) {
-  const value = color.toLowerCase();
-  return value === "#ffffff" || value === "#fff" || value === "white";
 }
 
 function shortRoundLabel(round: Round) {
@@ -95,8 +94,8 @@ export function CupTab({
   );
   const [teamA, teamB] = sortedTeams;
   const roundIds = useMemo(() => rounds.map((r) => r.id), [rounds]);
-  const colorA = teamA?.color ?? "#c4a35a";
-  const colorB = teamB?.color ?? "#16352a";
+  const colorA = teamAccentColor(teamA?.color, "gold");
+  const colorB = teamAccentColor(teamB?.color, "green");
 
   const competitionRounds = useMemo(
     () =>
@@ -313,10 +312,7 @@ export function CupTab({
             className="absolute inset-y-0 right-0 transition-all duration-700"
             style={{
               width: `${Math.min(100, (pointsB / CUP_TARGET) * 100)}%`,
-              backgroundColor: colorB,
-              boxShadow: isLightTeamColor(colorB)
-                ? "inset 0 0 0 1px rgba(255,255,255,0.35)"
-                : undefined,
+              backgroundColor: "#ffffff",
             }}
           />
         </div>
@@ -394,10 +390,10 @@ export function CupTab({
                         : `${done}/${sessionMatches.length} final`}
                     </p>
                   </div>
-                  <p className="font-display shrink-0 text-xl tabular-nums text-ink">
-                    {formatPoints(sessionA)}
+                  <p className="font-display shrink-0 text-xl tabular-nums">
+                    <span style={{ color: colorA }}>{formatPoints(sessionA)}</span>
                     <span className="mx-1 text-muted">–</span>
-                    {formatPoints(sessionB)}
+                    <span style={{ color: colorB }}>{formatPoints(sessionB)}</span>
                   </p>
                 </div>
 
@@ -480,7 +476,7 @@ export function CupTab({
                             style={
                               aUp
                                 ? {
-                                    backgroundColor: `${colorA}1a`,
+                                    backgroundColor: teamWashColor(colorA),
                                     boxShadow: `inset 0 0 0 1px ${colorA}55`,
                                   }
                                 : undefined
@@ -547,7 +543,7 @@ export function CupTab({
                             style={
                               bUp
                                 ? {
-                                    backgroundColor: `${colorB}1a`,
+                                    backgroundColor: teamWashColor(colorB),
                                     boxShadow: `inset 0 0 0 1px ${colorB}55`,
                                   }
                                 : undefined

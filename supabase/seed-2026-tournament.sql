@@ -77,7 +77,7 @@ on conflict do nothing;
 -- Empty teams for draft night (assign players later in the app)
 insert into public.teams (id, tournament_id, name, color) values
   ('00000000-0000-4000-8000-000000000201', '00000000-0000-4000-8000-000000000010', 'Team A', '#c4a35a'),
-  ('00000000-0000-4000-8000-000000000202', '00000000-0000-4000-8000-000000000010', 'Team B', '#16352a')
+  ('00000000-0000-4000-8000-000000000202', '00000000-0000-4000-8000-000000000010', 'Team B', '#2f6b4f')
 on conflict (tournament_id, name) do update
 set color = excluded.color;
 
