@@ -145,6 +145,28 @@ export type WeatherSceneTheme = {
   chipBorder: string;
 };
 
+/** Sample WMO codes used to preview each sky scene on Home. */
+const PREVIEW_CODES: { label: string; code: number }[] = [
+  { label: "Sunny / clear", code: 0 },
+  { label: "Partly cloudy", code: 2 },
+  { label: "Overcast", code: 3 },
+  { label: "Fog", code: 45 },
+  { label: "Rain", code: 61 },
+  { label: "Thunderstorm", code: 95 },
+  { label: "Snow", code: 71 },
+];
+
+/** All sky themes for the Home preview gallery. */
+export function weatherScenePreviews(): {
+  label: string;
+  theme: WeatherSceneTheme;
+}[] {
+  return PREVIEW_CODES.map(({ label, code }) => ({
+    label,
+    theme: weatherSceneTheme(code),
+  }));
+}
+
 /** Visual theme for the Home weather card from a WMO code. */
 export function weatherSceneTheme(code: number): WeatherSceneTheme {
   if (code === 0 || code === 1) {
