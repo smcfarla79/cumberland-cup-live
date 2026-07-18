@@ -54,6 +54,7 @@ export function MatchScoreboard({
   onBack,
 }: MatchScoreboardProps) {
   const format = resolvePlayFormat(round);
+  const shareTeamScore = format === "scramble";
   const roundHoles = useMemo(() => holesForRound(round, holes), [round, holes]);
   const sortedTeams = useMemo(
     () => [...teams].sort((a, b) => a.name.localeCompare(b.name)),
@@ -120,6 +121,15 @@ export function MatchScoreboard({
     );
   }
 
+  /** Same-side partner(s) — scramble copies the hole score to them. */
+  function partnerIdsOnSide(playerId: string) {
+    const me = match.players.find((p) => p.player_id === playerId);
+    if (!me) return [];
+    return match.players
+      .filter((p) => p.team_id === me.team_id && p.player_id !== playerId)
+      .map((p) => p.player_id);
+  }
+
   async function saveStrokes(playerId: string, strokes: number) {
     if (!canEditPlayer(playerId) || !hole) {
       setMessage("You don’t have permission to edit that player.");
@@ -128,21 +138,29 @@ export function MatchScoreboard({
     setSavingPlayerId(playerId);
     setMessage("");
 
-    // Optimistic UI so the number moves immediately
-    setScoresByPlayer((prev) => ({
-      ...prev,
-      [playerId]: { ...(prev[playerId] ?? {}), [activeHole]: strokes },
-    }));
+    const targets = shareTeamScore
+      ? [playerId, ...partnerIdsOnSide(playerId)]
+      : [playerId];
+
+    // Optimistic UI so both scramble partners update immediately
+    setScoresByPlayer((prev) => {
+      const next = { ...prev };
+      for (const id of targets) {
+        next[id] = { ...(next[id] ?? {}), [activeHole]: strokes };
+      }
+      return next;
+    });
 
     const supabase = createClient();
+    const now = new Date().toISOString();
     const { error } = await supabase.from("hole_scores").upsert(
-      {
+      targets.map((id) => ({
         round_id: round.id,
-        player_id: playerId,
+        player_id: id,
         hole_number: activeHole,
         strokes,
-        updated_at: new Date().toISOString(),
-      },
+        updated_at: now,
+      })),
       { onConflict: "round_id,player_id,hole_number" },
     );
     setSavingPlayerId(null);
@@ -195,6 +213,8 @@ export function MatchScoreboard({
             <p className="text-xs font-semibold text-fairway">
               Best ball {best} · {toParLabel(best, hole.par)}
             </p>
+          ) : shareTeamScore ? (
+            <p className="text-xs font-semibold text-fairway">Team score</p>
           ) : null}
         </div>
         <ul className="space-y-3">
@@ -233,7 +253,9 @@ export function MatchScoreboard({
                       {strokesGot > 0
                         ? `Stroke hole (−${strokesGot})`
                         : "No stroke"}
-                      {net != null ? ` · net ${net} · ${toParLabel(net, hole.par)}` : ""}
+                      {net != null
+                        ? ` · net ${net} · ${toParLabel(net, hole.par)}`
+                        : ""}
                       {!editable ? " · view only" : ""}
                     </p>
                   </div>
@@ -296,9 +318,11 @@ export function MatchScoreboard({
       <p className="mt-1 text-xs text-muted">
         Signed in as {sessionPlayer?.display_name ?? "Unknown"}
         {isAdmin ? " · admin" : ""}
-        {isAdmin
-          ? " — use − / + under any player"
-          : " — you can edit your row and your partner’s"}
+        {shareTeamScore
+          ? " — one score updates both partners"
+          : isAdmin
+            ? " — use − / + under any player"
+            : " — you can edit your row and your partner’s"}
       </p>
 
       <div className="mt-5 flex gap-2 overflow-x-auto pb-2">
@@ -328,6 +352,7 @@ export function MatchScoreboard({
           {hole.handicap_index != null
             ? ` · Stroke index ${hole.handicap_index}`
             : ""}
+          {shareTeamScore ? " · scramble: shared team score" : ""}
         </div>
       ) : null}
 

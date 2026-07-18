@@ -1,6 +1,6 @@
 /**
  * Update tournament_players course handicaps from the 6.3.26 sheet.
- * Decimals rounded per Cup rules: .5+ up, .4 and below down.
+ * Decimals use standard rounding: .5+ up, below .5 down.
  * Harrison Lee "18*" → 18.
  * Run: node scripts/update-handicaps-2026.mjs
  */
@@ -25,31 +25,29 @@ function loadEnv() {
 }
 
 function roundHcp(value) {
-  const floor = Math.floor(value);
-  const frac = value - floor;
-  return frac >= 0.5 ? floor + 1 : floor;
+  return Math.round(value);
 }
 
 /** From Handicap 6.3.26 sheet (display name → raw index). */
 const RAW = {
   "Brett Cooper": 0.0,
-  "Andrew Heitzenrater": 0.6,
-  "Scott McFarlane": 0.9,
-  "Jackson Cooper": 1.5,
-  "Will Moore": 6.0,
-  "Hurst Renner": 6.6,
-  "James Snover": 7.5,
-  "Ben Clune": 8.3,
-  "Tommy Concklin": 8.4,
-  "Marshall Ussery": 9.4,
-  "Tyler Fullerton": 9.6,
-  "Mike Walker": 10.2,
-  "Billy Collins": 11.0,
-  "Garrett Liebe": 13.0,
-  "Shane Shelly": 13.3,
-  "Taylor Rowe": 15.1,
-  "Larson Heitzenrater": 15.5,
-  "Rand Jackson": 16.5,
+  "Andrew Heitzenrater": 1.5,
+  "Scott McFarlane": 2.7,
+  "Marshall Ussery": 3.1,
+  "James Snover": 4.6,
+  "Tommy Concklin": 5.5,
+  "Hurst Renner": 6.8,
+  "Shane Shelly": 6.8,
+  "Jackson Cooper": 7.0,
+  "Tyler Fullerton": 8.3,
+  "Billy Collins": 10.0,
+  "Will Moore": 10.3,
+  "Larson Heitzenrater": 11.3,
+  "Ben Clune": 12.4,
+  "Taylor Rowe": 13.2,
+  "Mike Walker": 14.2,
+  "Garrett Liebe": 16.9,
+  "Rand Jackson": 21.1,
   "Andy Franks": 26.2,
   "Harrison Lee": 18, // 18* on sheet
 };
