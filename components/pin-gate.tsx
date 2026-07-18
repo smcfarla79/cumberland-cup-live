@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 type PinGateProps = {
   tournamentName: string;
@@ -8,134 +8,47 @@ type PinGateProps = {
   onSuccess: () => void;
 };
 
-/** Drone clip from last year’s tournament video (4:45–4:53). */
-const YT_VIDEO_ID = "JpsPHaHRkBA";
-const CLIP_START_SEC = 4 * 60 + 45; // 4:45
-const CLIP_END_SEC = 4 * 60 + 53; // 4:53
-
 function PinDroneBackground() {
-  const iframeRef = useRef<HTMLIFrameElement>(null);
-  const [origin, setOrigin] = useState("");
-  const [localFailed, setLocalFailed] = useState(false);
+  const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
-    setOrigin(window.location.origin);
+    const video = videoRef.current;
+    if (!video) return;
+    video.muted = true;
+    void video.play().catch(() => {
+      /* iOS may require a tap — handled below */
+    });
   }, []);
 
-  const embedSrc = useMemo(() => {
-    const params = new URLSearchParams({
-      autoplay: "1",
-      mute: "1",
-      controls: "0",
-      disablekb: "1",
-      fs: "0",
-      iv_load_policy: "3",
-      modestbranding: "1",
-      playsinline: "1",
-      rel: "0",
-      start: String(CLIP_START_SEC),
-      end: String(CLIP_END_SEC),
-      loop: "1",
-      playlist: YT_VIDEO_ID,
-      enablejsapi: "1",
-    });
-    if (origin) params.set("origin", origin);
-    return `https://www.youtube-nocookie.com/embed/${YT_VIDEO_ID}?${params.toString()}`;
-  }, [origin]);
-
-  // Re-seek when the clip hits the end (YouTube loop often restarts from 0).
-  useEffect(() => {
-    if (!origin) return;
-
-    const seekAndPlay = () => {
-      const win = iframeRef.current?.contentWindow;
-      if (!win) return;
-      win.postMessage(
-        JSON.stringify({
-          event: "command",
-          func: "seekTo",
-          args: [CLIP_START_SEC, true],
-        }),
-        "*",
-      );
-      win.postMessage(
-        JSON.stringify({ event: "command", func: "mute", args: [] }),
-        "*",
-      );
-      win.postMessage(
-        JSON.stringify({ event: "command", func: "playVideo", args: [] }),
-        "*",
-      );
-    };
-
-    const id = window.setInterval(seekAndPlay, CLIP_END_SEC - CLIP_START_SEC);
-    const kick = window.setTimeout(seekAndPlay, 800);
-
-    return () => {
-      window.clearInterval(id);
-      window.clearTimeout(kick);
-    };
-  }, [origin]);
-
   function kickPlayback() {
-    const win = iframeRef.current?.contentWindow;
-    if (!win) return;
-    win.postMessage(
-      JSON.stringify({
-        event: "command",
-        func: "seekTo",
-        args: [CLIP_START_SEC, true],
-      }),
-      "*",
-    );
-    win.postMessage(
-      JSON.stringify({ event: "command", func: "mute", args: [] }),
-      "*",
-    );
-    win.postMessage(
-      JSON.stringify({ event: "command", func: "playVideo", args: [] }),
-      "*",
-    );
+    const video = videoRef.current;
+    if (!video) return;
+    video.muted = true;
+    void video.play().catch(() => {});
   }
 
   return (
     <div className="absolute inset-0 overflow-hidden bg-pine-deep" aria-hidden>
-      {/* Optional local assets — drop public/pin-drone.mp4 later */}
-      {!localFailed ? (
-        <video
-          className="pointer-events-none absolute inset-0 z-[1] h-full w-full object-cover"
-          autoPlay
-          muted
-          loop
-          playsInline
-          preload="auto"
-          onError={() => setLocalFailed(true)}
-        >
-          <source src="/pin-drone.mp4" type="video/mp4" />
-        </video>
-      ) : null}
+      <video
+        ref={videoRef}
+        className="pointer-events-none absolute inset-0 z-0 h-full w-full object-cover"
+        autoPlay
+        muted
+        loop
+        playsInline
+        preload="auto"
+        src="/pin-drone.mp4"
+      />
 
-      {origin ? (
-        <div className="pointer-events-none absolute left-1/2 top-1/2 z-0 h-[56.25vw] min-h-full w-full min-w-[177.78vh] -translate-x-1/2 -translate-y-1/2">
-          <iframe
-            ref={iframeRef}
-            title="Cumberland Cup drone background"
-            src={embedSrc}
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-            className="h-full w-full border-0"
-          />
-        </div>
-      ) : null}
+      <div className="pointer-events-none absolute inset-0 z-[1] bg-pine-deep/30" />
+      <div className="pointer-events-none absolute inset-0 z-[1] bg-gradient-to-t from-pine-deep/75 via-transparent to-pine-deep/35" />
 
-      <div className="pointer-events-none absolute inset-0 z-[2] bg-pine-deep/30" />
-      <div className="pointer-events-none absolute inset-0 z-[2] bg-gradient-to-t from-pine-deep/75 via-transparent to-pine-deep/35" />
-
-      {/* iOS often needs a tap before YouTube autoplay starts */}
+      {/* iOS sometimes needs a tap before muted autoplay starts */}
       <button
         type="button"
         tabIndex={-1}
         aria-hidden
-        className="absolute inset-0 z-[3] cursor-default"
+        className="absolute inset-0 z-[2] cursor-default"
         onClick={kickPlayback}
         onTouchStart={kickPlayback}
       />
