@@ -4,10 +4,10 @@ import { BrandLogo } from "@/components/brand-logo";
 import type { AppTab } from "@/lib/types";
 
 const TABS: { id: AppTab; label: string }[] = [
-  { id: "teams", label: "Teams" },
-  { id: "matches", label: "Matches" },
+  { id: "home", label: "Home" },
   { id: "cup", label: "Cup" },
-  { id: "score", label: "Score" },
+  { id: "play", label: "Play" },
+  { id: "teams", label: "Teams" },
   { id: "course", label: "Card" },
 ];
 
@@ -51,7 +51,7 @@ export function AppTabs({ active, onChange, playerName, onSignOut }: AppTabsProp
               type="button"
               onClick={() => onChange(tab.id)}
               className={[
-                "flex-1 px-2 py-2.5 text-sm font-medium transition",
+                "flex-1 px-1.5 py-2.5 text-[13px] font-medium transition sm:px-2 sm:text-sm",
                 isActive
                   ? "border-b-2 border-pine text-pine"
                   : "border-b-2 border-transparent text-muted hover:text-ink",

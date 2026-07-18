@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState, useEffectEvent } from "react";
+import { MatchScoreboard } from "@/components/match-scoreboard";
 import {
   calculateMatchPlayStanding,
   isMatchPlayFormat,
@@ -23,6 +24,8 @@ type MatchesTabProps = {
   rounds: Round[];
   holes: Hole[];
   isAdmin?: boolean;
+  sessionPlayerId?: string;
+  title?: string;
 };
 
 type MatchWithPlayers = Match & { players: MatchPlayer[] };
@@ -41,6 +44,8 @@ export function MatchesTab({
   rounds,
   holes,
   isAdmin = false,
+  sessionPlayerId = "",
+  title = "Lineups",
 }: MatchesTabProps) {
   const competitionRounds = useMemo(
     () => rounds.filter((r) => r.scoring_format === "match"),
@@ -386,101 +391,41 @@ export function MatchesTab({
   }, [matches, assignments, players, sideSize, teamA, teamB]);
 
   const detailMatch = matches.find((m) => m.id === detailMatchId) ?? null;
-  const detailStanding = detailMatch ? standingFor(detailMatch) : null;
 
   if (competitionRounds.length === 0) {
     return (
       <section className="mx-auto max-w-2xl px-5 py-6">
-        <h1 className="font-display text-3xl text-ink">Matches</h1>
+        <h1 className="font-display text-3xl text-ink">{title}</h1>
         <p className="mt-3 text-muted">No match-play rounds found yet.</p>
       </section>
     );
   }
 
-  if (detailMatch && detailStanding && activeRound && teamA && teamB) {
+  if (detailMatch && activeRound && teamA && teamB) {
     return (
-      <section className="mx-auto w-full max-w-2xl px-5 py-6">
-        <button
-          type="button"
-          onClick={() => setDetailMatchId(null)}
-          className="text-sm text-muted hover:text-ink"
-        >
-          ← All matches
-        </button>
-        <h1 className="font-display mt-3 text-3xl text-ink">
-          Match {detailMatch.match_number}
-        </h1>
-        <p className="mt-2 text-sm font-semibold text-ink">
-          {detailStanding.statusLabel}
-        </p>
-        <p className="mt-1 text-sm text-muted">
-          {formatLabel(resolvePlayFormat(activeRound))} · hole wins{" "}
-          {detailStanding.teamAHolesWon}–{detailStanding.teamBHolesWon}
-        </p>
-        <p className="mt-1 text-xs text-muted">
-          {detailMatch.players
-            .filter((p) => p.team_id === teamA.id)
-            .map((p) => playerLabel(p.player_id))
-            .join(" / ")}{" "}
-          vs{" "}
-          {detailMatch.players
-            .filter((p) => p.team_id === teamB.id)
-            .map((p) => playerLabel(p.player_id))
-            .join(" / ")}
-        </p>
-
-        <div className="mt-6 overflow-x-auto border border-mist bg-white">
-          <table className="w-full min-w-[480px] border-collapse text-sm">
-            <thead>
-              <tr className="border-b border-mist bg-fog text-xs text-muted">
-                <th className="px-3 py-2 text-left font-medium">Hole</th>
-                <th className="px-2 py-2 text-center font-medium">{teamA.name}</th>
-                <th className="px-2 py-2 text-center font-medium">{teamB.name}</th>
-                <th className="px-3 py-2 text-right font-medium">Result</th>
-              </tr>
-            </thead>
-            <tbody>
-              {detailStanding.holeResults.map((hole) => (
-                <tr key={hole.holeNumber} className="border-b border-mist/80">
-                  <td className="px-3 py-2 tabular-nums text-ink">
-                    {hole.holeNumber}
-                    <span className="text-muted"> · par {hole.par}</span>
-                  </td>
-                  <td className="px-2 py-2 text-center tabular-nums text-ink">
-                    {hole.teamANet ?? "—"}
-                  </td>
-                  <td className="px-2 py-2 text-center tabular-nums text-ink">
-                    {hole.teamBNet ?? "—"}
-                  </td>
-                  <td className="px-3 py-2 text-right text-xs text-muted">
-                    {hole.winner === "incomplete"
-                      ? "—"
-                      : hole.winner === "halve"
-                        ? "Halved"
-                        : hole.winner === "team_a"
-                          ? `${teamA.name} wins hole`
-                          : `${teamB.name} wins hole`}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-        <p className="mt-3 text-xs text-muted">
-          Team hole scores are best-ball nets (with handicaps). Match updates
-          automatically as scores come in.
-        </p>
-      </section>
+      <MatchScoreboard
+        round={activeRound}
+        match={detailMatch}
+        holes={holes}
+        players={players}
+        teams={teams}
+        sessionPlayerId={sessionPlayerId}
+        isAdmin={isAdmin}
+        onBack={() => {
+          setDetailMatchId(null);
+          void refresh();
+        }}
+      />
     );
   }
 
   return (
     <section className="mx-auto w-full max-w-2xl px-5 py-6">
       <div className="animate-rise">
-        <h1 className="font-display text-3xl text-ink">Matches</h1>
+        <h1 className="font-display text-3xl text-ink">{title}</h1>
         <p className="mt-2 text-sm text-muted">
-          Set lineups, then follow live match play. Results finalize
-          automatically when every hole has scores.
+          Set lineups for each session. Players score from the Score view on
+          Play.
         </p>
       </div>
 
@@ -669,9 +614,9 @@ export function MatchesTab({
                         (incomplete ? "Needs players" : "Not started")}
                     </p>
                     {!adjusting ? (
-                      <p className="mt-1 text-xs text-muted">
-                        Tap for hole-by-hole
-                      </p>
+                    <p className="mt-1 text-xs text-muted">
+                      Tap to score hole-by-hole
+                    </p>
                     ) : null}
                   </button>
                   {isAdmin && !adjusting ? (

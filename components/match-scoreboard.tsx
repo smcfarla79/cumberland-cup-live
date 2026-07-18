@@ -62,6 +62,9 @@ export function MatchScoreboard({
 
   const sideA = match.players.filter((p) => p.team_id === teamA?.id);
   const sideB = match.players.filter((p) => p.team_id === teamB?.id);
+  const orphaned = match.players.filter(
+    (p) => p.team_id !== teamA?.id && p.team_id !== teamB?.id,
+  );
   const allPlayerIds = match.players.map((p) => p.player_id);
 
   const [scoresByPlayer, setScoresByPlayer] = useState<
@@ -70,9 +73,10 @@ export function MatchScoreboard({
   const [activeHole, setActiveHole] = useState(
     roundHoles[0]?.hole_number ?? 1,
   );
-  const [editingPlayerId, setEditingPlayerId] = useState<string | null>(null);
   const [message, setMessage] = useState("");
-  const [saving, setSaving] = useState(false);
+  const [savingPlayerId, setSavingPlayerId] = useState<string | null>(null);
+
+  const sessionPlayer = players.find((p) => p.id === sessionPlayerId) ?? null;
 
   const loadScores = useEffectEvent(async () => {
     if (allPlayerIds.length === 0) return;
@@ -105,21 +109,30 @@ export function MatchScoreboard({
   const hole =
     roundHoles.find((h) => h.hole_number === activeHole) ?? roundHoles[0];
 
-  function canEdit(playerId: string) {
+  function canEditPlayer(playerId: string) {
     if (isAdmin) return true;
     if (playerId === sessionPlayerId) return true;
     const mySide = match.players.find((p) => p.player_id === sessionPlayerId);
     const theirSide = match.players.find((p) => p.player_id === playerId);
-    // Partners on the same match side can enter each other's scores
     return Boolean(
       mySide && theirSide && mySide.team_id === theirSide.team_id,
     );
   }
 
   async function saveStrokes(playerId: string, strokes: number) {
-    if (!canEdit(playerId) || !hole) return;
-    setSaving(true);
+    if (!canEditPlayer(playerId) || !hole) {
+      setMessage("You don’t have permission to edit that player.");
+      return;
+    }
+    setSavingPlayerId(playerId);
     setMessage("");
+
+    // Optimistic UI so the number moves immediately
+    setScoresByPlayer((prev) => ({
+      ...prev,
+      [playerId]: { ...(prev[playerId] ?? {}), [activeHole]: strokes },
+    }));
+
     const supabase = createClient();
     const { error } = await supabase.from("hole_scores").upsert(
       {
@@ -131,15 +144,20 @@ export function MatchScoreboard({
       },
       { onConflict: "round_id,player_id,hole_number" },
     );
-    setSaving(false);
+    setSavingPlayerId(null);
+
     if (error) {
       setMessage(error.message);
-      return;
+      await loadScores();
     }
-    setScoresByPlayer((prev) => ({
-      ...prev,
-      [playerId]: { ...(prev[playerId] ?? {}), [activeHole]: strokes },
-    }));
+  }
+
+  function bump(playerId: string, delta: number) {
+    if (!hole) return;
+    const current = scoresByPlayer[playerId]?.[activeHole];
+    const base = current ?? hole.par;
+    const next = Math.min(15, Math.max(1, base + delta));
+    void saveStrokes(playerId, next);
   }
 
   function sideBlock(side: MatchPlayer[], team: Team | undefined) {
@@ -168,52 +186,72 @@ export function MatchScoreboard({
             </p>
           ) : null}
         </div>
-        <ul className="space-y-2">
+        <ul className="space-y-3">
           {nets.map(({ mp, player, gross, net }) => {
-            const editable = canEdit(mp.player_id);
-            const selected = editingPlayerId === mp.player_id;
+            const editable = canEditPlayer(mp.player_id);
+            const saving = savingPlayerId === mp.player_id;
             const strokesGot = strokesReceivedOnHole(
               player?.handicap,
               hole.handicap_index,
             );
+            const isYou = mp.player_id === sessionPlayerId;
             return (
-              <li key={mp.player_id}>
-                <button
-                  type="button"
-                  disabled={!editable}
-                  onClick={() =>
-                    editable ? setEditingPlayerId(mp.player_id) : undefined
-                  }
-                  className={[
-                    "w-full px-3 py-2.5 text-left",
-                    editable
-                      ? selected
-                        ? "bg-pine text-fog"
-                        : "border border-mist hover:border-fairway"
-                      : "border border-mist bg-fog/50 opacity-90",
-                  ].join(" ")}
-                >
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="text-sm font-medium">
+              <li
+                key={mp.player_id}
+                className={[
+                  "border px-3 py-3",
+                  editable ? "border-mist bg-fog/40" : "border-mist/60 bg-fog/20",
+                  isYou ? "ring-2 ring-fairway/40" : "",
+                ].join(" ")}
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <div>
+                    <p className="text-sm font-medium text-ink">
                       {player?.display_name ?? "Unknown"}
+                      {isYou ? " · you" : ""}
                       {player?.handicap != null ? ` · HCP ${player.handicap}` : ""}
-                    </span>
-                    <span className="text-sm tabular-nums">
-                      {gross ?? "—"}
-                      {net != null ? ` → net ${net}` : ""}
-                    </span>
+                    </p>
+                    <p className="mt-1 text-xs text-muted">
+                      {strokesGot > 0
+                        ? `Stroke hole (−${strokesGot})`
+                        : "No stroke"}
+                      {net != null ? ` · net ${net} · ${toParLabel(net, hole.par)}` : ""}
+                      {!editable ? " · view only" : ""}
+                    </p>
                   </div>
-                  <p
-                    className={[
-                      "mt-1 text-xs",
-                      selected ? "text-mist/80" : "text-muted",
-                    ].join(" ")}
-                  >
-                    {strokesGot > 0 ? `Stroke hole (−${strokesGot})` : "No stroke"}
-                    {net != null ? ` · ${toParLabel(net, hole.par)}` : ""}
-                    {!editable ? " · view only" : selected ? " · editing" : " · tap to edit"}
+                  <p className="font-display text-3xl tabular-nums text-ink">
+                    {gross ?? "—"}
                   </p>
-                </button>
+                </div>
+
+                {editable ? (
+                  <div className="mt-3 grid grid-cols-3 gap-2">
+                    <button
+                      type="button"
+                      disabled={saving}
+                      onClick={() => bump(mp.player_id, -1)}
+                      className="border border-mist bg-white py-3 text-xl text-ink disabled:opacity-50"
+                    >
+                      −
+                    </button>
+                    <button
+                      type="button"
+                      disabled={saving}
+                      onClick={() => void saveStrokes(mp.player_id, hole.par)}
+                      className="border border-pine bg-pine py-3 text-xs font-semibold text-fog disabled:opacity-50"
+                    >
+                      Par
+                    </button>
+                    <button
+                      type="button"
+                      disabled={saving}
+                      onClick={() => bump(mp.player_id, 1)}
+                      className="border border-mist bg-white py-3 text-xl text-ink disabled:opacity-50"
+                    >
+                      +
+                    </button>
+                  </div>
+                ) : null}
               </li>
             );
           })}
@@ -222,16 +260,8 @@ export function MatchScoreboard({
     );
   }
 
-  const editingPlayer = editingPlayerId
-    ? players.find((p) => p.id === editingPlayerId)
-    : null;
-  const editingGross =
-    editingPlayerId != null
-      ? scoresByPlayer[editingPlayerId]?.[activeHole]
-      : undefined;
-
   return (
-    <section className="mx-auto w-full max-w-2xl px-5 py-6">
+    <section className="mx-auto w-full max-w-2xl px-5 py-6 pb-16">
       <button
         type="button"
         onClick={onBack}
@@ -246,9 +276,11 @@ export function MatchScoreboard({
         {formatLabel(format)} · {round.name}
       </p>
       <p className="mt-1 text-xs text-muted">
+        Signed in as {sessionPlayer?.display_name ?? "Unknown"}
+        {isAdmin ? " · admin" : ""}
         {isAdmin
-          ? "Admin: tap any player, then set the hole score."
-          : "You and your partner can enter scores for each other. Opponents are view only."}
+          ? " — use − / + under any player"
+          : " — you can edit your row and your partner’s"}
       </p>
 
       <div className="mt-5 flex gap-2 overflow-x-auto pb-2">
@@ -258,10 +290,7 @@ export function MatchScoreboard({
             <button
               key={h.id}
               type="button"
-              onClick={() => {
-                setActiveHole(h.hole_number);
-                setEditingPlayerId(null);
-              }}
+              onClick={() => setActiveHole(h.hole_number)}
               className={[
                 "flex h-10 w-10 shrink-0 items-center justify-center border text-xs tabular-nums",
                 isActive
@@ -289,57 +318,22 @@ export function MatchScoreboard({
         {sideBlock(sideB, teamB)}
       </div>
 
-      {editingPlayer && hole && canEdit(editingPlayer.id) ? (
-        <div className="mt-4 border border-pine bg-white p-4">
-          <p className="text-sm font-semibold text-ink">
-            Editing {editingPlayer.display_name} · Hole {hole.hole_number}
+      {orphaned.length > 0 ? (
+        <div className="mt-3 border border-danger/40 bg-white p-3">
+          <p className="text-sm font-semibold text-danger">
+            Players missing a team on this match
           </p>
-          <p className="mt-1 text-xs text-muted">
-            Current gross: {editingGross ?? "—"}
-          </p>
-          <div className="mt-4 grid grid-cols-3 gap-3">
-            <button
-              type="button"
-              disabled={saving}
-              onClick={() => {
-                const base = editingGross ?? hole.par;
-                void saveStrokes(
-                  editingPlayer.id,
-                  Math.max(1, base - 1),
-                );
-              }}
-              className="border border-mist py-4 text-2xl text-ink disabled:opacity-50"
-            >
-              −
-            </button>
-            <button
-              type="button"
-              disabled={saving}
-              onClick={() => void saveStrokes(editingPlayer.id, hole.par)}
-              className="border border-pine bg-pine py-4 text-sm font-semibold text-fog disabled:opacity-50"
-            >
-              Set par
-            </button>
-            <button
-              type="button"
-              disabled={saving}
-              onClick={() => {
-                const base = editingGross ?? hole.par;
-                void saveStrokes(
-                  editingPlayer.id,
-                  Math.min(15, base + 1),
-                );
-              }}
-              className="border border-mist py-4 text-2xl text-ink disabled:opacity-50"
-            >
-              +
-            </button>
-          </div>
+          <ul className="mt-2 space-y-2 text-sm text-ink">
+            {orphaned.map((mp) => (
+              <li key={mp.player_id}>
+                {playerName(players, mp.player_id)} — fix lineup on Matches
+              </li>
+            ))}
+          </ul>
         </div>
       ) : null}
 
       {message ? <p className="mt-3 text-sm text-danger">{message}</p> : null}
-      {saving ? <p className="mt-2 text-sm text-muted">Saving…</p> : null}
 
       <div className="mt-6 overflow-x-auto border border-mist bg-white">
         <table className="w-full min-w-[520px] border-collapse text-xs">
@@ -378,7 +372,11 @@ export function MatchScoreboard({
                       key={`${mp.player_id}-${h.hole_number}`}
                       className="px-1 py-2 text-center tabular-nums text-ink"
                     >
-                      {gross == null ? "—" : net != null && net !== gross ? `${gross}/${net}` : gross}
+                      {gross == null
+                        ? "—"
+                        : net != null && net !== gross
+                          ? `${gross}/${net}`
+                          : gross}
                     </td>
                   );
                 })}

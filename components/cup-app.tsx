@@ -4,10 +4,10 @@ import { useEffect, useState, useEffectEvent } from "react";
 import { AppTabs } from "@/components/app-tabs";
 import { CourseTab } from "@/components/course-tab";
 import { CupTab } from "@/components/cup-tab";
-import { MatchesTab } from "@/components/matches-tab";
+import { HomeTab } from "@/components/home-tab";
 import { PinGate } from "@/components/pin-gate";
+import { PlayTab } from "@/components/play-tab";
 import { PlayerPicker } from "@/components/player-picker";
-import { ScoreTab } from "@/components/score-tab";
 import { TeamsTab } from "@/components/teams-tab";
 import { clearSession, getSession, setSession } from "@/lib/session";
 import { createClient } from "@/lib/supabase/client";
@@ -24,7 +24,8 @@ type Gate = "loading" | "pin" | "player" | "app" | "error";
 
 export function CupApp() {
   const [gate, setGate] = useState<Gate>("loading");
-  const [tab, setTab] = useState<AppTab>("teams");
+  const [tab, setTab] = useState<AppTab>("home");
+  const [playRoundId, setPlayRoundId] = useState<string | null>(null);
   const [error, setError] = useState("");
   const [tournament, setTournament] = useState<Tournament | null>(null);
   const [players, setPlayers] = useState<Player[]>([]);
@@ -236,7 +237,7 @@ export function CupApp() {
     setSession(next);
     setSessionState(next);
     setGate("app");
-    setTab("teams");
+    setTab("cup");
   }
 
   function handleSignOut() {
@@ -290,6 +291,36 @@ export function CupApp() {
         playerName={session.playerName}
         onSignOut={handleSignOut}
       />
+      {tab === "home" ? <HomeTab /> : null}
+      {tab === "cup" ? (
+        <CupTab
+          tournamentId={tournament.id}
+          teams={teams}
+          rounds={rounds}
+          players={players}
+          holes={holes}
+          sessionPlayerId={session.playerId}
+          onGoToPlay={(roundId) => {
+            setPlayRoundId(roundId);
+            setTab("play");
+          }}
+        />
+      ) : null}
+      {tab === "play" ? (
+        <PlayTab
+          sessionPlayerId={session.playerId}
+          sessionPlayerName={session.playerName}
+          players={players}
+          rounds={rounds}
+          holes={holes}
+          teams={teams}
+          isAdmin={
+            players.find((p) => p.id === session.playerId)?.is_admin === true
+          }
+          initialRoundId={playRoundId}
+          onConsumeInitialRound={() => setPlayRoundId(null)}
+        />
+      ) : null}
       {tab === "teams" ? (
         <TeamsTab
           tournamentId={tournament.id}
@@ -300,38 +331,6 @@ export function CupApp() {
           }
           onPlayersChange={setPlayers}
           onTeamsChange={setTeams}
-        />
-      ) : null}
-      {tab === "matches" ? (
-        <MatchesTab
-          players={players}
-          teams={teams}
-          rounds={rounds}
-          holes={holes}
-          isAdmin={
-            players.find((p) => p.id === session.playerId)?.is_admin === true
-          }
-        />
-      ) : null}
-      {tab === "cup" ? (
-        <CupTab
-          tournamentId={tournament.id}
-          teams={teams}
-          rounds={rounds}
-          players={players}
-        />
-      ) : null}
-      {tab === "score" ? (
-        <ScoreTab
-          sessionPlayerId={session.playerId}
-          sessionPlayerName={session.playerName}
-          players={players}
-          rounds={rounds}
-          holes={holes}
-          teams={teams}
-          isAdmin={
-            players.find((p) => p.id === session.playerId)?.is_admin === true
-          }
         />
       ) : null}
       {tab === "course" ? (

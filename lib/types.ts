@@ -86,4 +86,4 @@ export type AppSession = {
   playerName: string;
 };
 
-export type AppTab = "teams" | "matches" | "cup" | "score" | "course";
+export type AppTab = "home" | "cup" | "play" | "teams" | "course";

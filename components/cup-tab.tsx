@@ -3,8 +3,10 @@
 import { useEffect, useMemo, useState, useEffectEvent } from "react";
 import { BrandLogo } from "@/components/brand-logo";
 import { TeamSwatch } from "@/components/team-swatch";
+import { calculateMatchPlayStanding } from "@/lib/match-play";
+import { compactMatchStatus } from "@/lib/match-status";
 import { createClient } from "@/lib/supabase/client";
-import type { Match, MatchPlayer, Player, Round, Team } from "@/lib/types";
+import type { Hole, Match, MatchPlayer, Player, Round, Team } from "@/lib/types";
 
 const CUP_TARGET = 18;
 
@@ -13,6 +15,9 @@ type CupTabProps = {
   teams: Team[];
   rounds: Round[];
   players: Player[];
+  holes: Hole[];
+  sessionPlayerId?: string;
+  onGoToPlay?: (roundId: string) => void;
 };
 
 type MatchWithPlayers = Match & { players: MatchPlayer[] };
@@ -24,50 +29,60 @@ function formatPoints(value: number) {
 
 function shortRoundLabel(round: Round) {
   const name = round.name;
-  if (/friday am/i.test(name)) return "Friday AM · Front 9 · Best Ball";
-  if (/friday pm/i.test(name)) return "Friday PM · Back 9 · Scramble / Shamble";
-  if (/saturday am/i.test(name)) return "Saturday AM · Front 9 · Scramble";
+  if (/friday am/i.test(name)) return "Friday AM · Best Ball";
+  if (/friday pm/i.test(name)) return "Friday PM · Scramble / Shamble";
+  if (/saturday am/i.test(name)) return "Saturday AM · Scramble";
   if (/1v1|singles|match play/i.test(name)) {
-    return `Saturday · Singles (${round.hole_count === 9 ? "9" : "18"} holes)`;
+    return `Singles · ${round.hole_count === 9 ? "9" : "18"} holes`;
   }
-  if (/seeding/i.test(name)) return "Thursday · Front 9 · Seeding";
+  if (/seeding/i.test(name)) return "Seeding";
   return name;
 }
 
-function dayLabel(dayNumber: number, playDate: string | null) {
-  if (playDate) {
-    const date = new Date(`${playDate}T12:00:00`);
-    return date.toLocaleDateString(undefined, {
-      weekday: "long",
-      month: "short",
-      day: "numeric",
-    });
-  }
-  return `Day ${dayNumber}`;
+function lastName(displayName: string) {
+  const parts = displayName.trim().split(/\s+/);
+  return parts[parts.length - 1] ?? displayName;
 }
 
-function pointsEarned(
-  match: Match,
-  teamId: string,
-): { points: number; label: string } {
-  const value = Number(match.points_value);
-  if (match.status !== "complete") {
-    return { points: 0, label: "Pending" };
-  }
-  if (match.is_halved) {
-    return { points: value / 2, label: `Halve · +${formatPoints(value / 2)}` };
-  }
-  if (match.winning_team_id === teamId) {
-    return { points: value, label: `Win · +${formatPoints(value)}` };
-  }
-  return { points: 0, label: "Loss · 0" };
+function firstInitial(displayName: string) {
+  const parts = displayName.trim().split(/\s+/);
+  return (parts[0]?.[0] ?? "").toUpperCase();
 }
 
-export function CupTab({ tournamentId, teams, rounds, players }: CupTabProps) {
+/** Prefer last names; disambiguate with initial; shorten very long names. */
+function boardName(displayName: string, siblingNames: string[]) {
+  const last = lastName(displayName);
+  const sameLast = siblingNames.filter(
+    (n) => lastName(n).toLowerCase() === last.toLowerCase(),
+  ).length;
+  if (sameLast > 1) return `${firstInitial(displayName)}. ${last}`;
+  if (last.length > 11) return `${firstInitial(displayName)}. ${last.slice(0, 9)}`;
+  return last;
+}
+
+function sideBoardNames(side: MatchPlayer[], allPlayers: Player[]) {
+  const names = side.map(
+    (sp) =>
+      allPlayers.find((p) => p.id === sp.player_id)?.display_name ?? "—",
+  );
+  return names.map((n) => boardName(n, names));
+}
+
+export function CupTab({
+  tournamentId,
+  teams,
+  rounds,
+  players,
+  holes,
+  sessionPlayerId,
+  onGoToPlay,
+}: CupTabProps) {
   const [matches, setMatches] = useState<MatchWithPlayers[]>([]);
+  const [scoresByRound, setScoresByRound] = useState<
+    Record<string, Record<string, Record<number, number>>>
+  >({});
   const [message, setMessage] = useState("");
   const [updatedAt, setUpdatedAt] = useState<Date | null>(null);
-  const [selectedRoundId, setSelectedRoundId] = useState<string | null>(null);
 
   const sortedTeams = useMemo(
     () => [...teams].sort((a, b) => a.name.localeCompare(b.name)),
@@ -75,6 +90,7 @@ export function CupTab({ tournamentId, teams, rounds, players }: CupTabProps) {
   );
   const [teamA, teamB] = sortedTeams;
   const roundIds = useMemo(() => rounds.map((r) => r.id), [rounds]);
+  const purple = teamA?.color ?? "#582C83";
 
   const competitionRounds = useMemo(
     () =>
@@ -86,8 +102,6 @@ export function CupTab({ tournamentId, teams, rounds, players }: CupTabProps) {
         }),
     [rounds],
   );
-
-  const selectedRound = competitionRounds.find((r) => r.id === selectedRoundId);
 
   const refresh = useEffectEvent(async () => {
     if (roundIds.length === 0) return;
@@ -131,12 +145,32 @@ export function CupTab({ tournamentId, teams, rounds, players }: CupTabProps) {
       matchPlayers = (mpRows as MatchPlayer[]) ?? [];
     }
 
-    setMatches(
-      baseMatches.map((m) => ({
-        ...m,
-        players: matchPlayers.filter((p) => p.match_id === m.id),
-      })),
-    );
+    const withPlayers = baseMatches.map((m) => ({
+      ...m,
+      players: matchPlayers.filter((p) => p.match_id === m.id),
+    }));
+
+    const playerIds = [...new Set(matchPlayers.map((p) => p.player_id))];
+    const byRound: Record<string, Record<string, Record<number, number>>> = {};
+
+    if (playerIds.length > 0) {
+      const { data: scoreRows } = await supabase
+        .from("hole_scores")
+        .select("player_id, hole_number, strokes, round_id")
+        .in("round_id", roundIds)
+        .in("player_id", playerIds);
+
+      (scoreRows ?? []).forEach((row) => {
+        const rid = row.round_id as string;
+        const pid = row.player_id as string;
+        if (!byRound[rid]) byRound[rid] = {};
+        if (!byRound[rid][pid]) byRound[rid][pid] = {};
+        byRound[rid][pid][row.hole_number as number] = row.strokes as number;
+      });
+    }
+
+    setMatches(withPlayers);
+    setScoresByRound(byRound);
     setUpdatedAt(new Date());
     setMessage("");
   });
@@ -165,8 +199,19 @@ export function CupTab({ tournamentId, teams, rounds, players }: CupTabProps) {
     return total;
   }
 
-  function playerName(id: string) {
-    return players.find((p) => p.id === id)?.display_name ?? "Unknown";
+  function standingFor(match: MatchWithPlayers, round: Round) {
+    if (!teamA || !teamB) return null;
+    return calculateMatchPlayStanding({
+      round,
+      holes,
+      sideA: match.players.filter((p) => p.team_id === teamA.id),
+      sideB: match.players.filter((p) => p.team_id === teamB.id),
+      sideSize: match.side_size,
+      players,
+      scoresByPlayer: scoresByRound[round.id] ?? {},
+      teamAName: teamA.name,
+      teamBName: teamB.name,
+    });
   }
 
   const pointsA = teamA ? pointsFor(teamA.id) : 0;
@@ -182,15 +227,21 @@ export function CupTab({ tournamentId, teams, rounds, players }: CupTabProps) {
         ? teamA?.name
         : teamB?.name;
 
-  const sessionsByDay = useMemo(() => {
-    const map = new Map<number, Round[]>();
-    for (const round of competitionRounds) {
-      const list = map.get(round.day_number) ?? [];
-      list.push(round);
-      map.set(round.day_number, list);
-    }
-    return [...map.entries()].sort((a, b) => a[0] - b[0]);
-  }, [competitionRounds]);
+  const nowPlaying = useMemo(() => {
+    if (!sessionPlayerId) return null;
+    const myPending = matches
+      .filter(
+        (m) =>
+          m.status === "pending" &&
+          m.players.some((p) => p.player_id === sessionPlayerId),
+      )
+      .sort((a, b) => a.match_number - b.match_number);
+    const match = myPending[0];
+    if (!match) return null;
+    const round = rounds.find((r) => r.id === match.round_id) ?? null;
+    if (!round) return null;
+    return { match, round };
+  }, [matches, sessionPlayerId, rounds]);
 
   if (!teamA || !teamB) {
     return (
@@ -203,179 +254,44 @@ export function CupTab({ tournamentId, teams, rounds, players }: CupTabProps) {
     );
   }
 
-  if (selectedRound) {
-    const sessionMatches = matches
-      .filter((m) => m.round_id === selectedRound.id)
-      .sort((a, b) => a.match_number - b.match_number);
-    const sessionA = pointsFor(teamA.id, selectedRound.id);
-    const sessionB = pointsFor(teamB.id, selectedRound.id);
-
-    return (
-      <section className="mx-auto w-full max-w-2xl px-5 py-6">
-        <button
-          type="button"
-          onClick={() => setSelectedRoundId(null)}
-          className="text-sm text-muted hover:text-ink"
-        >
-          ← Back to Cup board
-        </button>
-        <h1 className="font-display mt-3 text-3xl text-ink">
-          {shortRoundLabel(selectedRound)}
-        </h1>
-        <p className="mt-2 text-sm text-muted">
-          Session score{" "}
-          <span className="font-semibold text-ink">
-            {formatPoints(sessionA)} – {formatPoints(sessionB)}
-          </span>
-        </p>
-
-        <ul className="mt-6 space-y-3 animate-fade">
-          {sessionMatches.length === 0 ? (
-            <li className="border border-mist bg-white px-4 py-4 text-sm text-muted">
-              No matches have been set for this session yet. Add them on the
-              Matches tab.
-            </li>
-          ) : (
-            sessionMatches.map((match) => {
-              const sideA = match.players.filter((p) => p.team_id === teamA.id);
-              const sideB = match.players.filter((p) => p.team_id === teamB.id);
-              const resultA = pointsEarned(match, teamA.id);
-              const resultB = pointsEarned(match, teamB.id);
-
-              return (
-                <li key={match.id} className="border border-mist bg-white p-4">
-                  <div className="flex items-center justify-between gap-3">
-                    <p className="text-xs tracking-wide text-fairway uppercase">
-                      Match {match.match_number} · {formatPoints(Number(match.points_value))}{" "}
-                      pt match
-                    </p>
-                    <p className="text-xs text-muted">
-                      {match.status === "complete"
-                        ? match.is_halved
-                          ? "Halved"
-                          : match.winning_team_id === teamA.id
-                            ? `${teamA.name} win`
-                            : `${teamB.name} win`
-                        : "Pending"}
-                    </p>
-                  </div>
-
-                  <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                    <div className="border border-mist px-3 py-3">
-                      <div className="flex items-center justify-between gap-2">
-                        <div className="flex items-center gap-2">
-                          <TeamSwatch color={teamA.color} />
-                          <p className="text-sm font-semibold text-ink">
-                            {teamA.name}
-                          </p>
-                        </div>
-                        <p className="text-xs font-medium text-ink">
-                          {resultA.label}
-                        </p>
-                      </div>
-                      <p className="mt-2 text-sm text-muted">
-                        {sideA.length === 0
-                          ? "No players listed"
-                          : sideA
-                              .map((p) => playerName(p.player_id))
-                              .join(" / ")}
-                      </p>
-                    </div>
-
-                    <div className="border border-mist px-3 py-3">
-                      <div className="flex items-center justify-between gap-2">
-                        <div className="flex items-center gap-2">
-                          <TeamSwatch color={teamB.color} />
-                          <p className="text-sm font-semibold text-ink">
-                            {teamB.name}
-                          </p>
-                        </div>
-                        <p className="text-xs font-medium text-ink">
-                          {resultB.label}
-                        </p>
-                      </div>
-                      <p className="mt-2 text-sm text-muted">
-                        {sideB.length === 0
-                          ? "No players listed"
-                          : sideB
-                              .map((p) => playerName(p.player_id))
-                              .join(" / ")}
-                      </p>
-                    </div>
-                  </div>
-                </li>
-              );
-            })
-          )}
-        </ul>
-      </section>
-    );
-  }
-
   return (
-    <section className="mx-auto w-full max-w-2xl px-5 py-6">
-      <div className="animate-rise">
-        <div className="flex items-center gap-4">
-          <BrandLogo size={64} className="shrink-0 ring-1 ring-mist" />
-          <div>
-            <p className="text-xs tracking-[0.22em] text-fairway uppercase">
-              Live standings
-            </p>
-            <h1 className="font-display mt-1 text-3xl text-ink">The Cup</h1>
-          </div>
-        </div>
-        <p className="mt-3 text-sm text-muted">
-          First to {CUP_TARGET}. Wins take full points; halves are split.
-        </p>
-      </div>
-
-      <div className="atmosphere relative mt-6 overflow-hidden px-4 py-8 text-fog animate-rise sm:px-6 sm:py-10">
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-0 opacity-25"
-          style={{
-            backgroundImage:
-              "url(\"data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.45'/%3E%3C/svg%3E\")",
-          }}
-        />
-
-        <div className="relative grid grid-cols-[1fr_auto_1fr] items-center gap-3 sm:gap-6">
-          <div className="text-center">
-            <div className="mb-3 flex items-center justify-center gap-2">
-              <TeamSwatch color={teamA.color ?? "#582C83"} />
-              <p className="text-xs tracking-[0.16em] text-mist/90 uppercase sm:text-sm">
+    <section className="mx-auto w-full max-w-2xl px-4 py-5 sm:px-5">
+      {/* Overall cup score — always visible at top */}
+      <div className="atmosphere relative overflow-hidden px-3 py-5 text-fog animate-rise sm:px-5 sm:py-6">
+        <div className="relative flex items-center justify-between gap-2">
+          <div className="min-w-0 flex-1 text-left">
+            <div className="mb-1 flex items-center gap-1.5">
+              <TeamSwatch color={purple} className="h-2.5 w-2.5" />
+              <p className="truncate text-[10px] tracking-[0.14em] text-mist/85 uppercase">
                 {teamA.name}
               </p>
             </div>
-            <p className="font-display text-6xl leading-none sm:text-7xl">
+            <p className="font-display text-5xl leading-none tabular-nums sm:text-6xl">
               {formatPoints(pointsA)}
             </p>
           </div>
 
-          <div className="flex flex-col items-center text-center">
-            <BrandLogo
-              size={52}
-              className="mb-2 ring-1 ring-white/25"
-            />
-            <p className="text-[10px] tracking-[0.2em] text-mist/70 uppercase">
+          <div className="flex shrink-0 flex-col items-center px-2">
+            <BrandLogo size={40} className="ring-1 ring-white/25" />
+            <p className="mt-1.5 text-[9px] tracking-[0.18em] text-mist/65 uppercase">
               of {CUP_TARGET}
             </p>
           </div>
 
-          <div className="text-center">
-            <div className="mb-3 flex items-center justify-center gap-2">
-              <TeamSwatch color={teamB.color ?? "#FFFFFF"} />
-              <p className="text-xs tracking-[0.16em] text-mist/90 uppercase sm:text-sm">
+          <div className="min-w-0 flex-1 text-right">
+            <div className="mb-1 flex items-center justify-end gap-1.5">
+              <p className="truncate text-[10px] tracking-[0.14em] text-mist/85 uppercase">
                 {teamB.name}
               </p>
+              <TeamSwatch color={teamB.color ?? "#FFFFFF"} className="h-2.5 w-2.5" />
             </div>
-            <p className="font-display text-6xl leading-none sm:text-7xl">
+            <p className="font-display text-5xl leading-none tabular-nums sm:text-6xl">
               {formatPoints(pointsB)}
             </p>
           </div>
         </div>
 
-        <div className="relative mt-8 h-2 w-full overflow-hidden bg-white/15">
+        <div className="relative mt-4 h-1.5 w-full overflow-hidden bg-white/15">
           <div
             className="absolute inset-y-0 left-0 bg-white/80 transition-all duration-700"
             style={{
@@ -391,7 +307,7 @@ export function CupTab({ tournamentId, teams, rounds, players }: CupTabProps) {
           />
         </div>
 
-        <p className="relative mt-4 text-center text-sm text-mist/85">
+        <p className="relative mt-2.5 text-center text-xs text-mist/80">
           {cupDecided && leaderName
             ? `${leaderName} has claimed The Cup`
             : pointsA === pointsB
@@ -400,78 +316,244 @@ export function CupTab({ tournamentId, teams, rounds, players }: CupTabProps) {
         </p>
       </div>
 
-      <div className="mt-8 animate-fade">
-        <h2 className="text-sm font-semibold tracking-[0.16em] text-fairway uppercase">
-          By session
-        </h2>
-        <p className="mt-1 text-xs text-muted">Tap a session to see each match.</p>
+      {nowPlaying && onGoToPlay ? (
+        <button
+          type="button"
+          onClick={() => onGoToPlay(nowPlaying.round.id)}
+          className="mt-3 w-full border border-pine/40 bg-white px-3 py-2.5 text-left text-sm transition hover:border-pine"
+        >
+          <span className="font-medium text-ink">Your match</span>
+          <span className="text-muted">
+            {" "}
+            · {shortRoundLabel(nowPlaying.round)} · Match{" "}
+            {nowPlaying.match.match_number} →
+          </span>
+        </button>
+      ) : null}
 
-        <div className="mt-4 space-y-5">
-          {sessionsByDay.map(([dayNumber, dayRounds]) => (
-            <div key={dayNumber}>
-              <p className="mb-2 text-xs tracking-wide text-muted uppercase">
-                {dayLabel(dayNumber, dayRounds[0]?.play_date ?? null)}
-              </p>
-              <ul className="space-y-2">
-                {dayRounds.map((round) => {
-                  const a = pointsFor(teamA.id, round.id);
-                  const b = pointsFor(teamB.id, round.id);
-                  const sessionMatches = matches.filter(
-                    (m) => m.round_id === round.id,
-                  );
-                  const done = sessionMatches.filter(
-                    (m) => m.status === "complete",
-                  ).length;
-                  const total = sessionMatches.length;
+      {/* Match board — top to bottom by session */}
+      <div className="mt-5 animate-fade">
+        <div className="mb-3 flex items-end justify-between gap-3">
+          <div>
+            <h2 className="text-xs font-semibold tracking-[0.16em] text-fairway uppercase">
+              Match board
+            </h2>
+            <p className="mt-0.5 text-[11px] text-muted">
+              Who&apos;s up · who&apos;s down · tap to score
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => void refresh()}
+            className="shrink-0 text-[11px] text-muted underline-offset-2 hover:text-ink hover:underline"
+          >
+            {updatedAt
+              ? updatedAt.toLocaleTimeString([], {
+                  hour: "numeric",
+                  minute: "2-digit",
+                })
+              : "Refresh"}
+          </button>
+        </div>
 
-                  return (
-                    <li key={round.id}>
-                      <button
-                        type="button"
-                        onClick={() => setSelectedRoundId(round.id)}
-                        className="w-full border border-mist bg-white px-4 py-3 text-left transition hover:border-fairway"
-                      >
-                        <div className="flex items-start justify-between gap-3">
-                          <div>
-                            <p className="text-sm font-medium text-ink">
-                              {shortRoundLabel(round)}
+        <div className="space-y-5">
+          {competitionRounds.map((round) => {
+            const sessionA = pointsFor(teamA.id, round.id);
+            const sessionB = pointsFor(teamB.id, round.id);
+            const sessionMatches = matches
+              .filter((m) => m.round_id === round.id)
+              .sort((x, y) => x.match_number - y.match_number);
+            const done = sessionMatches.filter(
+              (m) => m.status === "complete",
+            ).length;
+
+            return (
+              <div key={round.id}>
+                <div className="mb-1.5 flex items-baseline justify-between gap-2 border-b border-ink/15 pb-1.5">
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-semibold text-ink">
+                      {shortRoundLabel(round)}
+                    </p>
+                    <p className="text-[10px] text-muted">
+                      {sessionMatches.length === 0
+                        ? "No matches yet"
+                        : `${done}/${sessionMatches.length} final`}
+                    </p>
+                  </div>
+                  <p className="font-display shrink-0 text-xl tabular-nums text-ink">
+                    {formatPoints(sessionA)}
+                    <span className="mx-1 text-muted">–</span>
+                    {formatPoints(sessionB)}
+                  </p>
+                </div>
+
+                {/* Column labels */}
+                <div className="mb-0.5 grid grid-cols-[1fr_4.5rem_1fr] gap-1 px-1 text-[9px] tracking-wider text-muted uppercase">
+                  <span className="flex items-center gap-1 truncate">
+                    <TeamSwatch color={purple} className="h-1.5 w-1.5" />
+                    {teamA.name}
+                  </span>
+                  <span className="text-center">Status</span>
+                  <span className="flex items-center justify-end gap-1 truncate">
+                    {teamB.name}
+                    <TeamSwatch
+                      color={teamB.color ?? "#FFFFFF"}
+                      className="h-1.5 w-1.5"
+                    />
+                  </span>
+                </div>
+
+                {sessionMatches.length === 0 ? (
+                  <p className="px-1 py-3 text-xs text-muted">
+                    Lineups not set for this session.
+                  </p>
+                ) : (
+                  <div className="border border-ink/20 bg-white">
+                    {sessionMatches.map((match, index) => {
+                      const sideA = match.players.filter(
+                        (p) => p.team_id === teamA.id,
+                      );
+                      const sideB = match.players.filter(
+                        (p) => p.team_id === teamB.id,
+                      );
+                      const namesA = sideBoardNames(sideA, players);
+                      const namesB = sideBoardNames(sideB, players);
+                      const standing = standingFor(match, round);
+                      const closedEarly = Boolean(
+                        standing?.finalResult &&
+                          standing.finalResult !== "halve" &&
+                          !standing.complete,
+                      );
+                      const status = standing
+                        ? compactMatchStatus({
+                            lead: standing.lead,
+                            holesPlayed: standing.holesPlayed,
+                            holesRemaining: standing.holesRemaining,
+                            finalResult: standing.finalResult,
+                            closedEarly,
+                          })
+                        : "Not started";
+                      const lead = standing?.lead ?? 0;
+                      const aUp = lead > 0;
+                      const bUp = lead < 0;
+                      const started = (standing?.holesPlayed ?? 0) > 0;
+                      const includesMe =
+                        !!sessionPlayerId &&
+                        match.players.some(
+                          (p) => p.player_id === sessionPlayerId,
+                        );
+                      const statusDisplay =
+                        status === "Not started"
+                          ? "vs"
+                          : status === "All square"
+                            ? "AS"
+                            : status;
+
+                      return (
+                        <button
+                          key={match.id}
+                          type="button"
+                          onClick={() => onGoToPlay?.(round.id)}
+                          className={[
+                            "grid w-full grid-cols-[1fr_4.5rem_1fr] items-center gap-1 px-1.5 py-2 text-left transition",
+                            index > 0 ? "border-t border-ink/12" : "",
+                            includesMe ? "bg-pine/[0.04]" : "hover:bg-fog/80",
+                          ].join(" ")}
+                        >
+                          {/* Team A */}
+                          <div
+                            className={[
+                              "min-w-0 rounded-sm px-1.5 py-1",
+                              aUp ? "bg-[rgba(88,44,131,0.1)]" : "",
+                            ].join(" ")}
+                          >
+                            {namesA.length === 0 ? (
+                              <p className="text-xs text-muted">—</p>
+                            ) : (
+                              namesA.map((name, i) => (
+                                <p
+                                  key={sideA[i]?.player_id ?? `${name}-${i}`}
+                                  className={[
+                                    "truncate text-xs leading-tight sm:text-[13px]",
+                                    aUp
+                                      ? "font-semibold"
+                                      : started
+                                        ? "font-medium text-ink/70"
+                                        : "font-medium text-ink",
+                                  ].join(" ")}
+                                  style={aUp ? { color: purple } : undefined}
+                                >
+                                  {name}
+                                </p>
+                              ))
+                            )}
+                          </div>
+
+                          {/* Status */}
+                          <div className="flex flex-col items-center justify-center text-center">
+                            <p
+                              className={[
+                                "font-display text-sm leading-none tracking-wide sm:text-base",
+                                aUp
+                                  ? "font-semibold"
+                                  : bUp
+                                    ? "font-semibold text-ink"
+                                    : "text-muted",
+                              ].join(" ")}
+                              style={aUp ? { color: purple } : undefined}
+                            >
+                              {statusDisplay.toUpperCase()}
                             </p>
-                            <p className="mt-0.5 text-xs text-muted">
-                              {total === 0
-                                ? "No matches yet · tap for details"
-                                : `${done}/${total} matches final · tap for details`}
+                            <p className="mt-0.5 text-[9px] tabular-nums text-muted">
+                              {standing?.holesPlayed
+                                ? `Thru ${standing.holesPlayed}`
+                                : match.status === "complete"
+                                  ? "Final"
+                                  : "—"}
                             </p>
                           </div>
-                          <p className="font-display text-2xl tabular-nums text-ink">
-                            {formatPoints(a)}
-                            <span className="mx-1.5 text-muted">–</span>
-                            {formatPoints(b)}
-                          </p>
-                        </div>
-                      </button>
-                    </li>
-                  );
-                })}
-              </ul>
-            </div>
-          ))}
+
+                          {/* Team B */}
+                          <div
+                            className={[
+                              "min-w-0 rounded-sm px-1.5 py-1 text-right",
+                              bUp ? "bg-ink/[0.05]" : "",
+                            ].join(" ")}
+                          >
+                            {namesB.length === 0 ? (
+                              <p className="text-xs text-muted">—</p>
+                            ) : (
+                              namesB.map((name, i) => (
+                                <p
+                                  key={sideB[i]?.player_id ?? `${name}-${i}`}
+                                  className={[
+                                    "truncate text-xs leading-tight text-ink sm:text-[13px]",
+                                    bUp
+                                      ? "font-semibold"
+                                      : started
+                                        ? "font-medium text-ink/70"
+                                        : "font-medium",
+                                  ].join(" ")}
+                                >
+                                  {name}
+                                </p>
+                              ))
+                            )}
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </div>
       </div>
 
-      <div className="mt-6 flex items-center justify-between gap-3 text-sm text-muted">
-        <span>
-          {completed} completed · {pending} pending
-        </span>
-        <button
-          type="button"
-          onClick={() => void refresh()}
-          className="underline-offset-2 hover:text-ink hover:underline"
-        >
-          {updatedAt
-            ? `Updated ${updatedAt.toLocaleTimeString([], { hour: "numeric", minute: "2-digit", second: "2-digit" })}`
-            : "Refresh"}
-        </button>
-      </div>
+      <p className="mt-5 text-center text-[11px] text-muted">
+        {completed} completed · {pending} pending · first to {CUP_TARGET}
+      </p>
 
       {message ? <p className="mt-3 text-sm text-danger">{message}</p> : null}
     </section>
