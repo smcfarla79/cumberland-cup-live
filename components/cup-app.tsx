@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useEffectEvent } from "react";
 import { AppTabs } from "@/components/app-tabs";
+import { GrillTab } from "@/components/grill-tab";
 import { CourseTab } from "@/components/course-tab";
 import { CupTab } from "@/components/cup-tab";
 import { HomeTab } from "@/components/home-tab";
@@ -343,6 +344,7 @@ export function CupApp() {
       {tab === "course" ? (
         <CourseTab courseName={courseName} holes={holes} />
       ) : null}
+      {tab === "grill" ? <GrillTab /> : null}
     </div>
   );
 }

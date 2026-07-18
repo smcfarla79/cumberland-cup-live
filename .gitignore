@@ -39,3 +39,8 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# local media tooling (ffmpeg extracts, clip scratch)
+/tools/
+/tmp-clip/
+*.zip

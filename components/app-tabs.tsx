@@ -9,6 +9,7 @@ const TABS: { id: AppTab; label: string }[] = [
   { id: "play", label: "Play" },
   { id: "teams", label: "Teams" },
   { id: "course", label: "Card" },
+  { id: "grill", label: "Grill" },
 ];
 
 type AppTabsProps = {
@@ -51,7 +52,7 @@ export function AppTabs({ active, onChange, playerName, onSignOut }: AppTabsProp
               type="button"
               onClick={() => onChange(tab.id)}
               className={[
-                "flex-1 px-1.5 py-2.5 text-[13px] font-medium transition sm:px-2 sm:text-sm",
+                "flex-1 px-1 py-2.5 text-[12px] font-medium transition sm:px-2 sm:text-sm",
                 isActive
                   ? "border-b-2 border-pine text-pine"
                   : "border-b-2 border-transparent text-muted hover:text-ink",

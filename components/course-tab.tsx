@@ -1,6 +1,11 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
+import {
+  SEWANEE_ABOUT,
+  SEWANEE_COURSE_PAGE,
+  SEWANEE_FLYOVERS,
+} from "@/lib/sewanee-flyovers";
 import type { Hole } from "@/lib/types";
 
 type CourseTabProps = {
@@ -32,6 +37,14 @@ function sumPar(holes: Hole[]) {
   return holes.reduce((total, hole) => total + hole.par, 0);
 }
 
+function holeStatsLine(hole: Hole | undefined) {
+  if (!hole) return null;
+  const yards = hole.yards ?? hole.yards_purple;
+  return `Par ${hole.par}${yards != null ? ` · ${yards} yds` : ""}${
+    hole.handicap_index != null ? ` · HCP ${hole.handicap_index}` : ""
+  }`;
+}
+
 export function CourseTab({ courseName, holes }: CourseTabProps) {
   const ordered = useMemo(
     () => [...holes].sort((a, b) => a.hole_number - b.hole_number),
@@ -45,6 +58,8 @@ export function CourseTab({ courseName, holes }: CourseTabProps) {
     for (const hole of ordered) map.set(hole.hole_number, hole);
     return map;
   }, [ordered]);
+
+  const [openFlyover, setOpenFlyover] = useState<number | null>(null);
 
   const frontPar = sumPar(front);
   const backPar = sumPar(back);
@@ -105,7 +120,7 @@ export function CourseTab({ courseName, holes }: CourseTabProps) {
   }
 
   return (
-    <section className="mx-auto w-full max-w-6xl px-4 py-6">
+    <section className="mx-auto w-full max-w-6xl px-4 py-6 pb-16">
       <div className="animate-rise">
         <p className="text-xs tracking-[0.18em] text-fairway uppercase">
           Course scorecard
@@ -115,6 +130,7 @@ export function CourseTab({ courseName, holes }: CourseTabProps) {
           Holes 10–18 are the same physical holes as 1–9 from different tees.
           Yardages are labeled by tee color.
         </p>
+        <p className="mt-3 max-w-2xl text-sm text-muted">{SEWANEE_ABOUT.renovation}</p>
       </div>
 
       <div className="mt-4 flex flex-wrap gap-3 text-xs animate-fade">
@@ -213,6 +229,100 @@ export function CourseTab({ courseName, holes }: CourseTabProps) {
         Scroll sideways on phones to see the full card. Your Source of Truth
         notes play is typically one tee up from the tips (White).
       </p>
+
+      <div className="mt-10 animate-rise">
+        <div className="flex flex-wrap items-end justify-between gap-3">
+          <div>
+            <p className="text-xs tracking-[0.18em] text-fairway uppercase">
+              Hole guides
+            </p>
+            <h2 className="font-display mt-2 text-2xl text-ink">
+              Descriptions & flyovers
+            </h2>
+            <p className="mt-2 max-w-2xl text-sm text-muted">
+              {SEWANEE_ABOUT.flyoverNote} Tap a hole to play the video — front
+              and back tees share the same physical hole.
+            </p>
+          </div>
+          <a
+            href={SEWANEE_COURSE_PAGE}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="shrink-0 text-sm text-pine underline-offset-2 hover:underline"
+          >
+            View on Sewanee site →
+          </a>
+        </div>
+
+        <ul className="mt-5 space-y-2">
+          {SEWANEE_FLYOVERS.map((flyover) => {
+            const isOpen = openFlyover === flyover.frontHole;
+            const frontHole = byNumber.get(flyover.frontHole);
+            const backHole = byNumber.get(flyover.backHole);
+            return (
+              <li key={flyover.frontHole} className="border border-mist bg-white">
+                <button
+                  type="button"
+                  aria-expanded={isOpen}
+                  onClick={() =>
+                    setOpenFlyover(isOpen ? null : flyover.frontHole)
+                  }
+                  className="flex w-full items-center justify-between gap-3 px-4 py-3.5 text-left hover:bg-fog/60"
+                >
+                  <div>
+                    <p className="text-sm font-semibold text-ink">
+                      {flyover.title}
+                      {flyover.nickname ? (
+                        <span className="font-normal text-muted">
+                          {" "}
+                          · {flyover.nickname}
+                        </span>
+                      ) : null}
+                    </p>
+                    <p className="mt-1 text-xs text-muted">
+                      Front: {holeStatsLine(frontHole) ?? "—"}
+                      {" · "}
+                      Back: {holeStatsLine(backHole) ?? "—"}
+                    </p>
+                  </div>
+                  <span className="shrink-0 text-xs tracking-wide text-fairway uppercase">
+                    {isOpen ? "Close" : "Play"}
+                  </span>
+                </button>
+
+                {isOpen ? (
+                  <div className="border-t border-mist bg-fog/40 px-3 pb-3 pt-3 sm:px-4">
+                    <div className="overflow-hidden border border-mist bg-black">
+                      <video
+                        key={flyover.src}
+                        controls
+                        playsInline
+                        preload="metadata"
+                        className="aspect-video w-full bg-black"
+                      >
+                        <source src={flyover.src} type={flyover.type} />
+                        Your browser does not support this video.
+                      </video>
+                    </div>
+                    <p className="mt-2 text-[11px] text-muted">
+                      Video courtesy of{" "}
+                      <a
+                        href={SEWANEE_COURSE_PAGE}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-pine underline-offset-2 hover:underline"
+                      >
+                        The Course at Sewanee
+                      </a>
+                      . Descriptions are narrated in the flyover.
+                    </p>
+                  </div>
+                ) : null}
+              </li>
+            );
+          })}
+        </ul>
+      </div>
     </section>
   );
 }
