@@ -6,7 +6,6 @@ import {
   fetchSewaneeWeather,
   formatForecastDay,
   SEWANEE_COORDS,
-  weatherScenePreviews,
   weatherSceneTheme,
   type WeatherSnapshot,
 } from "@/lib/sewanee-weather";
@@ -25,8 +24,6 @@ import {
   mapsLinksForAddress,
 } from "@/lib/tournament-overview";
 
-/** Temporary gallery so you can compare every sky scene. */
-const SHOW_WEATHER_PREVIEWS = true;
 function MapLinks({ address }: { address: string }) {
   const { apple, google } = mapsLinksForAddress(address);
   return (
@@ -201,45 +198,6 @@ export function HomeTab() {
           )}
         </div>
       </section>
-
-      {SHOW_WEATHER_PREVIEWS ? (
-        <section className="mt-5 animate-fade">
-          <h2 className="text-xs font-semibold tracking-[0.16em] text-fairway uppercase">
-            Weather backgrounds (preview)
-          </h2>
-          <p className="mt-2 text-xs text-muted">
-            Every sky scene used on the live weather card — for review only.
-          </p>
-          <div className="mt-3 space-y-3">
-            {weatherScenePreviews().map(({ label, theme: preview }) => (
-              <div
-                key={preview.kind}
-                className="relative overflow-hidden border border-ink/15 px-4 py-5"
-                style={{ background: preview.background }}
-              >
-                <WeatherBackdrop kind={preview.kind} />
-                <div className="relative">
-                  <p
-                    className="text-xs font-semibold tracking-[0.14em] uppercase"
-                    style={{ color: preview.heading }}
-                  >
-                    {label}
-                  </p>
-                  <p
-                    className="font-display mt-2 text-4xl tabular-nums leading-none"
-                    style={{ color: preview.body }}
-                  >
-                    72°
-                  </p>
-                  <p className="mt-1 text-sm" style={{ color: preview.muted }}>
-                    Sample card · {preview.kind}
-                  </p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
-      ) : null}
 
       <Section title="Where">
         <p className="text-sm font-medium text-ink">{COURSE_ADDRESS.name}</p>

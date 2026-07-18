@@ -6,6 +6,7 @@ import { GrillTab } from "@/components/grill-tab";
 import { CourseTab } from "@/components/course-tab";
 import { CupTab } from "@/components/cup-tab";
 import { HomeTab } from "@/components/home-tab";
+import { InviteReveal } from "@/components/invite-reveal";
 import { PinGate } from "@/components/pin-gate";
 import { PlayTab } from "@/components/play-tab";
 import { PlayerPicker } from "@/components/player-picker";
@@ -21,7 +22,7 @@ import type {
   Tournament,
 } from "@/lib/types";
 
-type Gate = "loading" | "pin" | "player" | "app" | "error";
+type Gate = "loading" | "pin" | "invite" | "player" | "app" | "error";
 
 export function CupApp() {
   const [gate, setGate] = useState<Gate>("loading");
@@ -222,6 +223,10 @@ export function CupApp() {
 
   function handlePinSuccess() {
     setPinUnlocked(true);
+    setGate("invite");
+  }
+
+  function handleInviteContinue() {
     if (!tournament) {
       setGate("player");
       return;
@@ -285,6 +290,10 @@ export function CupApp() {
         onSuccess={handlePinSuccess}
       />
     );
+  }
+
+  if (gate === "invite") {
+    return <InviteReveal onContinue={handleInviteContinue} />;
   }
 
   if (gate === "player" || !session) {

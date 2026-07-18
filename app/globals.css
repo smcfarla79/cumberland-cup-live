@@ -90,3 +90,249 @@ body {
       #4a7a5c 100%
     );
 }
+
+/* —— Post-PIN invitation reveal —— */
+.invite-stage-bg {
+  background:
+    radial-gradient(
+      ellipse 70% 50% at 50% 30%,
+      rgba(196, 163, 90, 0.18) 0%,
+      transparent 55%
+    ),
+    linear-gradient(160deg, #0c1f18 0%, #16352a 45%, #1f3d30 100%);
+}
+
+.invite-scene {
+  --env-cream: #f4efe4;
+  --env-green: #1a3d2e;
+  --env-green-deep: #0f2920;
+  --env-gold: #c4a35a;
+  position: relative;
+  height: min(72vh, 640px);
+  perspective: 1200px;
+}
+
+.invite-envelope-back {
+  position: absolute;
+  left: 5%;
+  right: 5%;
+  bottom: 8%;
+  height: 42%;
+  background: linear-gradient(180deg, #2a5240 0%, var(--env-green-deep) 100%);
+  border: 1px solid rgba(196, 163, 90, 0.35);
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.45);
+  z-index: 1;
+}
+
+.invite-envelope-front {
+  position: absolute;
+  left: 5%;
+  right: 5%;
+  bottom: 8%;
+  height: 38%;
+  background: linear-gradient(185deg, #244a3a 0%, var(--env-green) 55%, #16352a 100%);
+  border: 1px solid rgba(196, 163, 90, 0.4);
+  clip-path: polygon(0 18%, 50% 55%, 100% 18%, 100% 100%, 0 100%);
+  z-index: 4;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding-bottom: 1.1rem;
+  transition: transform 0.9s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.invite-wax {
+  display: inline-flex;
+  height: 2.4rem;
+  width: 2.4rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: radial-gradient(circle at 35% 30%, #e0c57a, #9a7a35 70%);
+  color: #1a2e24;
+  font-family: var(--font-display), Georgia, serif;
+  font-size: 0.7rem;
+  letter-spacing: 0.06em;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+}
+
+.invite-flap {
+  position: absolute;
+  left: 5%;
+  right: 5%;
+  bottom: calc(8% + 28%);
+  height: 28%;
+  background: linear-gradient(180deg, #3a6550 0%, #244a3a 100%);
+  border: 1px solid rgba(196, 163, 90, 0.35);
+  clip-path: polygon(0 100%, 50% 8%, 100% 100%);
+  transform-origin: top center;
+  transform: rotateX(0deg);
+  z-index: 5;
+  transition: transform 1s cubic-bezier(0.22, 1, 0.36, 1);
+  backface-visibility: hidden;
+}
+
+.invite-scene.is-open .invite-flap {
+  transform: rotateX(168deg);
+  z-index: 0;
+}
+
+.invite-card {
+  position: absolute;
+  left: 10%;
+  right: 10%;
+  bottom: 22%;
+  z-index: 3;
+  transform: translateY(18%) scale(0.92);
+  opacity: 0.85;
+  transition:
+    transform 1.15s cubic-bezier(0.22, 1, 0.36, 1) 0.35s,
+    opacity 0.6s ease 0.2s;
+}
+
+.invite-scene.is-open .invite-card {
+  transform: translateY(-6%) scale(1);
+  opacity: 1;
+}
+
+.invite-scene.is-revealed .invite-card {
+  transform: translateY(-12%) scale(1);
+}
+
+.invite-card-inner {
+  background: linear-gradient(180deg, #faf7f0 0%, #f0ebe0 100%);
+  border: 2px solid var(--env-green);
+  box-shadow:
+    inset 0 0 0 1px var(--env-gold),
+    0 16px 36px rgba(0, 0, 0, 0.35);
+  padding: 1.1rem 1rem 1.15rem;
+  text-align: center;
+  color: #1a241e;
+  max-height: min(58vh, 520px);
+  overflow-y: auto;
+}
+
+.invite-champions-title {
+  font-family: var(--font-invite-serif), Georgia, serif;
+  font-size: 0.78rem;
+  letter-spacing: 0.04em;
+  color: #1a3d2e;
+}
+
+.invite-champions-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.35rem 0.75rem;
+  margin-top: 0.55rem;
+  font-family: var(--font-invite-script), cursive;
+  font-size: 0.78rem;
+  line-height: 1.35;
+  color: #243028;
+}
+
+.invite-champions-grid ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.invite-host {
+  margin-top: 0.85rem;
+  font-family: var(--font-invite-serif), Georgia, serif;
+  font-size: 0.72rem;
+  line-height: 1.45;
+  color: #2a332c;
+}
+
+.invite-script {
+  font-family: var(--font-invite-script), cursive;
+  font-size: 0.95rem;
+  color: #1a241e;
+}
+
+.invite-year {
+  margin-top: 0.65rem;
+  font-family: var(--font-invite-script), cursive;
+  font-size: 1.05rem;
+  color: #1a3d2e;
+}
+
+.invite-event {
+  margin-top: 0.1rem;
+  font-family: var(--font-invite-script), cursive;
+  font-size: clamp(1.65rem, 7vw, 2.15rem);
+  line-height: 1.05;
+  color: #14201b;
+}
+
+.invite-details,
+.invite-address {
+  margin-top: 0.55rem;
+  font-family: var(--font-invite-serif), Georgia, serif;
+  font-size: 0.72rem;
+  line-height: 1.4;
+  color: #2a332c;
+}
+
+.invite-address {
+  font-style: italic;
+  margin-top: 0.35rem;
+}
+
+.invite-ribbon {
+  position: absolute;
+  width: 0.55rem;
+  height: 55%;
+  bottom: 35%;
+  border-radius: 2px;
+  opacity: 0;
+  transform: translateY(40%) scaleY(0.4);
+  z-index: 2;
+  transition:
+    opacity 0.5s ease 0.25s,
+    transform 0.9s cubic-bezier(0.22, 1, 0.36, 1) 0.25s;
+}
+
+.invite-ribbon-a {
+  left: 22%;
+  background: linear-gradient(180deg, #e8d5a0, #c4a35a 40%, #8b6b2e);
+  transform: translateY(40%) rotate(-12deg) scaleY(0.4);
+}
+
+.invite-ribbon-b {
+  left: 48%;
+  background: linear-gradient(180deg, #f0e4b8, #d4b56a 45%, #a07f35);
+  transform: translateY(40%) rotate(3deg) scaleY(0.4);
+}
+
+.invite-ribbon-c {
+  right: 22%;
+  left: auto;
+  background: linear-gradient(180deg, #e0c878, #b8923f 50%, #7a5f28);
+  transform: translateY(40%) rotate(14deg) scaleY(0.4);
+}
+
+.invite-scene.is-open .invite-ribbon {
+  opacity: 0.95;
+  transform: translateY(-8%) scaleY(1);
+}
+
+.invite-scene.is-open .invite-ribbon-a {
+  transform: translateY(-10%) rotate(-14deg) scaleY(1.05);
+}
+
+.invite-scene.is-open .invite-ribbon-b {
+  transform: translateY(-14%) rotate(2deg) scaleY(1.08);
+}
+
+.invite-scene.is-open .invite-ribbon-c {
+  transform: translateY(-9%) rotate(16deg) scaleY(1.05);
+}
+
+.font-invite-script {
+  font-family: var(--font-invite-script), cursive;
+}
+
+.font-invite-serif {
+  font-family: var(--font-invite-serif), Georgia, serif;
+}

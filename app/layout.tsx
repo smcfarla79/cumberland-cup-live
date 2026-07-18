@@ -1,4 +1,9 @@
-import { Instrument_Serif, Manrope } from "next/font/google";
+import {
+  Cormorant_Garamond,
+  Great_Vibes,
+  Instrument_Serif,
+  Manrope,
+} from "next/font/google";
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 
@@ -11,6 +16,18 @@ const display = Instrument_Serif({
 const sans = Manrope({
   subsets: ["latin"],
   variable: "--font-sans",
+});
+
+const inviteScript = Great_Vibes({
+  weight: "400",
+  subsets: ["latin"],
+  variable: "--font-invite-script",
+});
+
+const inviteSerif = Cormorant_Garamond({
+  weight: ["400", "600"],
+  subsets: ["latin"],
+  variable: "--font-invite-serif",
 });
 
 export const metadata: Metadata = {
@@ -43,7 +60,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${display.variable} ${sans.variable} h-full`}>
+    <html
+      lang="en"
+      className={`${display.variable} ${sans.variable} ${inviteScript.variable} ${inviteSerif.variable} h-full`}
+    >
       <body className="min-h-full flex flex-col font-sans antialiased">
         {children}
       </body>
