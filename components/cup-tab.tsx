@@ -455,6 +455,15 @@ export function CupTab({
                           : status === "All square"
                             ? "AS"
                             : status;
+                      const matchFinished =
+                        match.status === "complete" ||
+                        Boolean(standing?.finalResult) ||
+                        Boolean(standing?.complete);
+                      const progressLabel = matchFinished
+                        ? "Finished"
+                        : standing?.holesPlayed
+                          ? `Thru ${standing.holesPlayed}`
+                          : "—";
 
                       return (
                         <button
@@ -526,11 +535,7 @@ export function CupTab({
                               {statusDisplay.toUpperCase()}
                             </p>
                             <p className="mt-0.5 text-[9px] tabular-nums text-muted">
-                              {standing?.holesPlayed
-                                ? `Thru ${standing.holesPlayed}`
-                                : match.status === "complete"
-                                  ? "Final"
-                                  : "—"}
+                              {progressLabel}
                             </p>
                           </div>
 

@@ -76,12 +76,13 @@ export function LiveMatchCard({
           ? "AS"
           : status.toUpperCase();
 
-  const thruLabel =
-    holesPlayed > 0
+  const thruLabel = isFinal
+    ? "Finished"
+    : holesPlayed > 0
       ? `Thru ${holesPlayed}`
       : status === "Not started"
         ? "Not started"
-        : "Final";
+        : "Finished";
 
   const aWon = isFinal && finalWinner === "team_a";
   const bWon = isFinal && finalWinner === "team_b";

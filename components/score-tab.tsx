@@ -454,7 +454,8 @@ export function ScoreTab({
                     bLeading={(standing?.lead ?? 0) < 0}
                     isFinal={
                       match.status === "complete" ||
-                      Boolean(standing?.finalResult)
+                      Boolean(standing?.finalResult) ||
+                      Boolean(standing?.complete)
                     }
                     finalWinner={
                       match.is_halved
