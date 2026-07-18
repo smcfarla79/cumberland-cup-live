@@ -1,11 +1,10 @@
--- Sewanee colors: Team A purple, Team B white
--- Official Sewanee purple: #582C83 (Pantone 268)
+-- Team colors: Team A gold, Team B green
 -- Run in Supabase SQL Editor
 
 update public.teams
-set color = '#582C83'
+set color = '#c4a35a'
 where name = 'Team A';
 
 update public.teams
-set color = '#FFFFFF'
+set color = '#16352a'
 where name = 'Team B';

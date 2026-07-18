@@ -21,7 +21,7 @@ export function BrandLogo({
       width={size}
       height={size}
       priority={priority}
-      className={["rounded-full bg-fog object-contain", className]
+      className={["rounded-full bg-white object-contain", className]
         .filter(Boolean)
         .join(" ")}
     />

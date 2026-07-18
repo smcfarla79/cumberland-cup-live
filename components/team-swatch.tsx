@@ -1,6 +1,6 @@
 "use client";
 
-/** Sewanee purple (#582C83) / white need a ring so the swatch stays visible. */
+/** Team color swatch — light colors get a ring so they stay visible. */
 export function TeamSwatch({
   color,
   className = "h-2.5 w-2.5",
@@ -8,11 +8,12 @@ export function TeamSwatch({
   color: string | null | undefined;
   className?: string;
 }) {
-  const value = color ?? "#582C83";
+  const value = color ?? "#c4a35a";
   const isLight =
     value.toLowerCase() === "#ffffff" ||
     value.toLowerCase() === "#fff" ||
-    value.toLowerCase() === "white";
+    value.toLowerCase() === "white" ||
+    value.toLowerCase() === "#c4a35a";
 
   return (
     <span

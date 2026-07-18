@@ -65,7 +65,10 @@ export function HomeTab() {
       {/* Brand + weekend */}
       <div className="atmosphere relative overflow-hidden px-4 py-7 text-fog animate-rise sm:px-6 sm:py-8">
         <div className="relative flex items-start gap-4">
-          <BrandLogo size={56} className="shrink-0 ring-1 ring-white/25" />
+          <BrandLogo
+            size={56}
+            className="shrink-0 shadow-[0_6px_20px_rgba(0,0,0,0.3)] ring-2 ring-white/40"
+          />
           <div className="min-w-0">
             <p className="text-[10px] tracking-[0.22em] text-mist/80 uppercase">
               Welcome

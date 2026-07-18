@@ -27,6 +27,11 @@ function formatPoints(value: number) {
   return value.toFixed(1);
 }
 
+function isLightTeamColor(color: string) {
+  const value = color.toLowerCase();
+  return value === "#ffffff" || value === "#fff" || value === "white";
+}
+
 function shortRoundLabel(round: Round) {
   const name = round.name;
   if (/friday am/i.test(name)) return "Friday AM · Best Ball";
@@ -90,7 +95,8 @@ export function CupTab({
   );
   const [teamA, teamB] = sortedTeams;
   const roundIds = useMemo(() => rounds.map((r) => r.id), [rounds]);
-  const purple = teamA?.color ?? "#582C83";
+  const colorA = teamA?.color ?? "#c4a35a";
+  const colorB = teamB?.color ?? "#16352a";
 
   const competitionRounds = useMemo(
     () =>
@@ -257,23 +263,27 @@ export function CupTab({
   return (
     <section className="mx-auto w-full max-w-2xl px-4 py-5 sm:px-5">
       {/* Overall cup score — always visible at top */}
-      <div className="atmosphere relative overflow-hidden px-3 py-5 text-fog animate-rise sm:px-5 sm:py-6">
-        <div className="relative flex items-center justify-between gap-2">
+      <div className="atmosphere relative overflow-hidden px-3 py-6 text-fog animate-rise sm:px-5 sm:py-7">
+        <div className="relative flex items-center justify-between gap-1.5 sm:gap-3">
           <div className="min-w-0 flex-1 text-left">
             <div className="mb-1 flex items-center gap-1.5">
-              <TeamSwatch color={purple} className="h-2.5 w-2.5" />
+              <TeamSwatch color={colorA} className="h-2.5 w-2.5" />
               <p className="truncate text-[10px] tracking-[0.14em] text-mist/85 uppercase">
                 {teamA.name}
               </p>
             </div>
-            <p className="font-display text-5xl leading-none tabular-nums sm:text-6xl">
+            <p className="font-display text-4xl leading-none tabular-nums sm:text-6xl">
               {formatPoints(pointsA)}
             </p>
           </div>
 
-          <div className="flex shrink-0 flex-col items-center px-2">
-            <BrandLogo size={40} className="ring-1 ring-white/25" />
-            <p className="mt-1.5 text-[9px] tracking-[0.18em] text-mist/65 uppercase">
+          <div className="flex shrink-0 flex-col items-center px-0.5 sm:px-2">
+            <BrandLogo
+              size={112}
+              className="h-[96px] w-[96px] shadow-[0_0_0_4px_rgba(255,255,255,0.4),0_10px_28px_rgba(0,0,0,0.4)] ring-2 ring-white/55 sm:h-[112px] sm:w-[112px]"
+              priority
+            />
+            <p className="mt-2 text-[9px] tracking-[0.18em] text-mist/70 uppercase">
               of {CUP_TARGET}
             </p>
           </div>
@@ -283,26 +293,30 @@ export function CupTab({
               <p className="truncate text-[10px] tracking-[0.14em] text-mist/85 uppercase">
                 {teamB.name}
               </p>
-              <TeamSwatch color={teamB.color ?? "#FFFFFF"} className="h-2.5 w-2.5" />
+              <TeamSwatch color={colorB} className="h-2.5 w-2.5" />
             </div>
-            <p className="font-display text-5xl leading-none tabular-nums sm:text-6xl">
+            <p className="font-display text-4xl leading-none tabular-nums sm:text-6xl">
               {formatPoints(pointsB)}
             </p>
           </div>
         </div>
 
-        <div className="relative mt-4 h-1.5 w-full overflow-hidden bg-white/15">
+        <div className="relative mt-5 h-2 w-full overflow-hidden bg-white/15">
           <div
-            className="absolute inset-y-0 left-0 bg-white/80 transition-all duration-700"
+            className="absolute inset-y-0 left-0 transition-all duration-700"
             style={{
               width: `${Math.min(100, (pointsA / CUP_TARGET) * 100)}%`,
+              backgroundColor: colorA,
             }}
           />
           <div
             className="absolute inset-y-0 right-0 transition-all duration-700"
             style={{
               width: `${Math.min(100, (pointsB / CUP_TARGET) * 100)}%`,
-              backgroundColor: "rgba(196, 163, 90, 0.85)",
+              backgroundColor: colorB,
+              boxShadow: isLightTeamColor(colorB)
+                ? "inset 0 0 0 1px rgba(255,255,255,0.35)"
+                : undefined,
             }}
           />
         </div>
@@ -390,16 +404,13 @@ export function CupTab({
                 {/* Column labels */}
                 <div className="mb-0.5 grid grid-cols-[1fr_4.5rem_1fr] gap-1 px-1 text-[9px] tracking-wider text-muted uppercase">
                   <span className="flex items-center gap-1 truncate">
-                    <TeamSwatch color={purple} className="h-1.5 w-1.5" />
+                    <TeamSwatch color={colorA} className="h-1.5 w-1.5" />
                     {teamA.name}
                   </span>
                   <span className="text-center">Status</span>
                   <span className="flex items-center justify-end gap-1 truncate">
                     {teamB.name}
-                    <TeamSwatch
-                      color={teamB.color ?? "#FFFFFF"}
-                      className="h-1.5 w-1.5"
-                    />
+                    <TeamSwatch color={colorB} className="h-1.5 w-1.5" />
                   </span>
                 </div>
 
@@ -464,8 +475,16 @@ export function CupTab({
                           <div
                             className={[
                               "min-w-0 rounded-sm px-1.5 py-1",
-                              aUp ? "bg-[rgba(88,44,131,0.1)]" : "",
+                              aUp ? "ring-1 ring-inset" : "",
                             ].join(" ")}
+                            style={
+                              aUp
+                                ? {
+                                    backgroundColor: `${colorA}1a`,
+                                    boxShadow: `inset 0 0 0 1px ${colorA}55`,
+                                  }
+                                : undefined
+                            }
                           >
                             {namesA.length === 0 ? (
                               <p className="text-xs text-muted">—</p>
@@ -481,7 +500,7 @@ export function CupTab({
                                         ? "font-medium text-ink/70"
                                         : "font-medium text-ink",
                                   ].join(" ")}
-                                  style={aUp ? { color: purple } : undefined}
+                                  style={aUp ? { color: colorA } : undefined}
                                 >
                                   {name}
                                 </p>
@@ -497,10 +516,16 @@ export function CupTab({
                                 aUp
                                   ? "font-semibold"
                                   : bUp
-                                    ? "font-semibold text-ink"
+                                    ? "font-semibold"
                                     : "text-muted",
                               ].join(" ")}
-                              style={aUp ? { color: purple } : undefined}
+                              style={
+                                aUp
+                                  ? { color: colorA }
+                                  : bUp
+                                    ? { color: colorB }
+                                    : undefined
+                              }
                             >
                               {statusDisplay.toUpperCase()}
                             </p>
@@ -517,8 +542,16 @@ export function CupTab({
                           <div
                             className={[
                               "min-w-0 rounded-sm px-1.5 py-1 text-right",
-                              bUp ? "bg-ink/[0.05]" : "",
+                              bUp ? "ring-1 ring-inset" : "",
                             ].join(" ")}
+                            style={
+                              bUp
+                                ? {
+                                    backgroundColor: `${colorB}1a`,
+                                    boxShadow: `inset 0 0 0 1px ${colorB}55`,
+                                  }
+                                : undefined
+                            }
                           >
                             {namesB.length === 0 ? (
                               <p className="text-xs text-muted">—</p>
@@ -527,13 +560,14 @@ export function CupTab({
                                 <p
                                   key={sideB[i]?.player_id ?? `${name}-${i}`}
                                   className={[
-                                    "truncate text-xs leading-tight text-ink sm:text-[13px]",
+                                    "truncate text-xs leading-tight sm:text-[13px]",
                                     bUp
                                       ? "font-semibold"
                                       : started
                                         ? "font-medium text-ink/70"
-                                        : "font-medium",
+                                        : "font-medium text-ink",
                                   ].join(" ")}
+                                  style={bUp ? { color: colorB } : undefined}
                                 >
                                   {name}
                                 </p>

@@ -90,7 +90,6 @@ export const SOCIAL = [
 
 export const HOUSE_NOTES = [
   "Treat the Sommer House with respect so we can keep using it.",
-  "Four players (“The Good Boys”) sleep at the in-laws’ to ease sleeping arrangements.",
   "There will be a keg at the Sommer House — plan accordingly.",
 ] as const;
 

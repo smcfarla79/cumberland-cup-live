@@ -14,6 +14,12 @@ function isLightColor(color: string | null | undefined) {
   return value === "#ffffff" || value === "#fff" || value === "white";
 }
 
+/** Soft wash from a hex color (6-digit). */
+function wash(color: string, alphaHex = "14") {
+  if (/^#[0-9a-fA-F]{6}$/.test(color)) return `${color}${alphaHex}`;
+  return `${color}14`;
+}
+
 type LiveMatchCardProps = {
   matchNumber: number;
   pointsValue: number;
@@ -45,9 +51,10 @@ export function LiveMatchCard({
   bLeading,
   onClick,
 }: LiveMatchCardProps) {
-  const purple = teamA.color ?? "#582C83";
-  const whiteTeam = teamB.color ?? "#FFFFFF";
-  const bIsLight = isLightColor(whiteTeam);
+  const colorA = teamA.color ?? "#c4a35a";
+  const colorB = teamB.color ?? "#16352a";
+  const bIsLight = isLightColor(colorB);
+  const aIsLight = isLightColor(colorA);
 
   const namesA = sideA.map((p) =>
     shortPlayerName(
@@ -76,6 +83,9 @@ export function LiveMatchCard({
         ? "Not started"
         : "Final";
 
+  const textA = aIsLight ? "#14201b" : colorA;
+  const textB = bIsLight ? "#14201b" : colorB;
+
   return (
     <button
       type="button"
@@ -97,22 +107,26 @@ export function LiveMatchCard({
         <p className="text-[11px] tabular-nums text-muted">{thruLabel}</p>
       </div>
 
-      {/* Side A — soft purple wash */}
       <div
         className="flex items-stretch gap-3 px-3 py-3"
-        style={{ backgroundColor: "rgba(88, 44, 131, 0.08)" }}
+        style={{ backgroundColor: wash(colorA, "18") }}
       >
         <div
           className="w-1 shrink-0 self-stretch rounded-full"
-          style={{ backgroundColor: purple }}
+          style={{
+            backgroundColor: colorA,
+            boxShadow: aIsLight
+              ? "inset 0 0 0 1px rgba(20, 32, 27, 0.28)"
+              : undefined,
+          }}
           aria-hidden
         />
         <div className="min-w-0 flex-1">
           <div className="mb-1.5">
-            <TeamSwatch color={purple} className="h-2 w-2" />
+            <TeamSwatch color={colorA} className="h-2 w-2" />
           </div>
           {namesA.length === 0 ? (
-            <p className="text-sm" style={{ color: purple }}>
+            <p className="text-sm" style={{ color: textA }}>
               —
             </p>
           ) : (
@@ -123,7 +137,7 @@ export function LiveMatchCard({
                   "truncate text-sm leading-snug",
                   aLeading ? "font-semibold" : "font-medium",
                 ].join(" ")}
-                style={{ color: purple }}
+                style={{ color: textA }}
               >
                 {name}
               </p>
@@ -132,28 +146,31 @@ export function LiveMatchCard({
         </div>
       </div>
 
-      {/* Center status */}
       <div className="flex items-center justify-center gap-3 border-y border-mist bg-fog px-3 py-2">
         <span className="h-px flex-1 bg-mist" aria-hidden />
-        <p className="font-display text-lg tracking-wide text-pine sm:text-xl">
+        <p
+          className="font-display text-lg tracking-wide sm:text-xl"
+          style={{
+            color: aLeading ? colorA : bLeading ? colorB : "#16352a",
+          }}
+        >
           {statusDisplay}
         </p>
         <span className="h-px flex-1 bg-mist" aria-hidden />
       </div>
 
-      {/* Side B — soft warm gray (white kit, readable ink type) */}
       <div
         className="flex items-stretch gap-3 px-3 py-3"
         style={{
           backgroundColor: bIsLight
             ? "rgba(20, 32, 27, 0.04)"
-            : `${whiteTeam}14`,
+            : wash(colorB, "18"),
         }}
       >
         <div
           className="w-1 shrink-0 self-stretch rounded-full"
           style={{
-            backgroundColor: bIsLight ? "#ffffff" : whiteTeam,
+            backgroundColor: bIsLight ? "#ffffff" : colorB,
             boxShadow: bIsLight
               ? "inset 0 0 0 1px rgba(20, 32, 27, 0.28)"
               : undefined,
@@ -163,7 +180,7 @@ export function LiveMatchCard({
         <div className="min-w-0 flex-1">
           <div className="mb-1.5">
             <TeamSwatch
-              color={bIsLight ? "#FFFFFF" : whiteTeam}
+              color={bIsLight ? "#FFFFFF" : colorB}
               className="h-2 w-2"
             />
           </div>
@@ -174,9 +191,10 @@ export function LiveMatchCard({
               <p
                 key={name}
                 className={[
-                  "truncate text-sm leading-snug text-ink",
+                  "truncate text-sm leading-snug",
                   bLeading ? "font-semibold" : "font-medium",
                 ].join(" ")}
+                style={{ color: textB }}
               >
                 {name}
               </p>

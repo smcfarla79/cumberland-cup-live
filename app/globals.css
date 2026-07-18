@@ -69,7 +69,24 @@ body {
 }
 
 .atmosphere {
+  /* Green ↔ white blend; stays dark enough for light text */
   background:
-    radial-gradient(ellipse 120% 80% at 50% -10%, #3d7a5c 0%, transparent 55%),
-    linear-gradient(165deg, var(--pine-deep) 0%, var(--pine) 48%, #1a4032 100%);
+    radial-gradient(
+      ellipse 95% 80% at 110% -20%,
+      rgba(255, 255, 255, 0.34) 0%,
+      transparent 48%
+    ),
+    radial-gradient(
+      ellipse 80% 60% at -10% 100%,
+      rgba(8, 24, 18, 0.8) 0%,
+      transparent 50%
+    ),
+    linear-gradient(
+      145deg,
+      #0c1f18 0%,
+      #16352a 32%,
+      #1a4032 55%,
+      #2a5a42 78%,
+      #4a7a5c 100%
+    );
 }

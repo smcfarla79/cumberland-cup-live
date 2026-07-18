@@ -39,7 +39,7 @@ export function PinGate({ tournamentName, expectedPin, onSuccess }: PinGateProps
           <BrandLogo
             size={176}
             priority
-            className="shadow-[0_12px_40px_rgba(0,0,0,0.35)] ring-1 ring-white/20"
+            className="shadow-[0_12px_40px_rgba(0,0,0,0.4)] ring-2 ring-white/40"
           />
         </div>
         <p className="text-sm tracking-[0.22em] text-gold uppercase">
