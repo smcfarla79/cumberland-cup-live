@@ -151,7 +151,10 @@ export function CourseTab({ courseName, holes }: CourseTabProps) {
         </span>
       </div>
 
-      <div className="mt-6 overflow-x-auto rounded-2xl border border-mist bg-white shadow-[0_6px_20px_rgba(20,32,27,0.07)] animate-fade">
+      <div
+        className="mt-6 overflow-x-auto rounded-2xl border border-mist bg-white shadow-[0_6px_20px_rgba(20,32,27,0.07)] animate-fade"
+        data-swipe-ignore
+      >
         <table className="w-full min-w-[760px] border-collapse text-xs sm:text-sm">
           <thead>
             <tr className="border-b border-mist bg-pine text-fog">

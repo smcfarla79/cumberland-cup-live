@@ -325,7 +325,7 @@ export function MatchScoreboard({
             : " — you can edit your row and your partner’s"}
       </p>
 
-      <div className="mt-5 flex gap-2 overflow-x-auto pb-2">
+      <div className="mt-5 flex gap-2 overflow-x-auto pb-2" data-swipe-ignore>
         {roundHoles.map((h) => {
           const isActive = h.hole_number === activeHole;
           return (
@@ -378,7 +378,10 @@ export function MatchScoreboard({
 
       {message ? <p className="mt-3 text-sm text-danger">{message}</p> : null}
 
-      <div className="mt-6 overflow-x-auto rounded-2xl border border-mist bg-white shadow-[0_6px_20px_rgba(20,32,27,0.07)]">
+      <div
+        className="mt-6 overflow-x-auto rounded-2xl border border-mist bg-white shadow-[0_6px_20px_rgba(20,32,27,0.07)]"
+        data-swipe-ignore
+      >
         <table className="w-full min-w-[520px] border-collapse text-xs">
           <thead>
             <tr className="border-b border-mist bg-fog text-muted">

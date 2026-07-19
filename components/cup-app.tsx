@@ -11,7 +11,7 @@ import { PinGate } from "@/components/pin-gate";
 import { PlayTab } from "@/components/play-tab";
 import { PlayerPicker } from "@/components/player-picker";
 import { TeamsTab } from "@/components/teams-tab";
-import { useEdgeTabSwipe } from "@/hooks/use-edge-tab-swipe";
+import { useSwipeableTabs } from "@/hooks/use-swipeable-tabs";
 import { clearSession, getSession, isSessionValid, setSession } from "@/lib/session";
 import { createClient } from "@/lib/supabase/client";
 import type {
@@ -38,7 +38,10 @@ export function CupApp() {
   const [courseName, setCourseName] = useState("The Course at Sewanee");
   const [session, setSessionState] = useState(getSession());
   const [pinUnlocked, setPinUnlocked] = useState(false);
-  const tabSwipe = useEdgeTabSwipe(tab, setTab);
+  const { containerRef: swipeRef, contentStyle: swipeStyle } = useSwipeableTabs(
+    tab,
+    setTab,
+  );
 
   const bootstrap = useEffectEvent(async () => {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -303,64 +306,63 @@ export function CupApp() {
   }
 
   return (
-    <div
-      className="min-h-dvh bg-fog"
-      onTouchStart={tabSwipe.onTouchStart}
-      onTouchEnd={tabSwipe.onTouchEnd}
-      onTouchCancel={tabSwipe.onTouchCancel}
-    >
+    <div className="min-h-dvh bg-fog">
       <AppTabs
         active={tab}
         onChange={setTab}
         playerName={session.playerName}
         onSignOut={handleSignOut}
       />
-      {tab === "home" ? <HomeTab /> : null}
-      {tab === "cup" ? (
-        <CupTab
-          tournamentId={tournament.id}
-          teams={teams}
-          rounds={rounds}
-          players={players}
-          holes={holes}
-          sessionPlayerId={session.playerId}
-          onGoToPlay={(roundId) => {
-            setPlayRoundId(roundId);
-            setTab("play");
-          }}
-        />
-      ) : null}
-      {tab === "play" ? (
-        <PlayTab
-          sessionPlayerId={session.playerId}
-          sessionPlayerName={session.playerName}
-          players={players}
-          rounds={rounds}
-          holes={holes}
-          teams={teams}
-          isAdmin={
-            players.find((p) => p.id === session.playerId)?.is_admin === true
-          }
-          initialRoundId={playRoundId}
-          onConsumeInitialRound={() => setPlayRoundId(null)}
-        />
-      ) : null}
-      {tab === "teams" ? (
-        <TeamsTab
-          tournamentId={tournament.id}
-          players={players}
-          teams={teams}
-          isAdmin={
-            players.find((p) => p.id === session.playerId)?.is_admin === true
-          }
-          onPlayersChange={setPlayers}
-          onTeamsChange={setTeams}
-        />
-      ) : null}
-      {tab === "course" ? (
-        <CourseTab courseName={courseName} holes={holes} />
-      ) : null}
-      {tab === "grill" ? <GrillTab /> : null}
+      <div ref={swipeRef} style={{ touchAction: "pan-y" }} className="overflow-x-hidden">
+        <div style={swipeStyle}>
+          {tab === "home" ? <HomeTab /> : null}
+          {tab === "cup" ? (
+            <CupTab
+              tournamentId={tournament.id}
+              teams={teams}
+              rounds={rounds}
+              players={players}
+              holes={holes}
+              sessionPlayerId={session.playerId}
+              onGoToPlay={(roundId) => {
+                setPlayRoundId(roundId);
+                setTab("play");
+              }}
+            />
+          ) : null}
+          {tab === "play" ? (
+            <PlayTab
+              sessionPlayerId={session.playerId}
+              sessionPlayerName={session.playerName}
+              players={players}
+              rounds={rounds}
+              holes={holes}
+              teams={teams}
+              isAdmin={
+                players.find((p) => p.id === session.playerId)?.is_admin === true
+              }
+              initialRoundId={playRoundId}
+              onConsumeInitialRound={() => setPlayRoundId(null)}
+            />
+          ) : null}
+          {tab === "teams" ? (
+            <TeamsTab
+              tournamentId={tournament.id}
+              players={players}
+              teams={teams}
+              isAdmin={
+                players.find((p) => p.id === session.playerId)?.is_admin === true
+              }
+              onPlayersChange={setPlayers}
+              onTeamsChange={setTeams}
+            />
+          ) : null}
+          {tab === "course" ? (
+            <CourseTab courseName={courseName} holes={holes} />
+          ) : null}
+          {tab === "grill" ? <GrillTab /> : null}
+        </div>
+      </div>
     </div>
   );
 }

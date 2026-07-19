@@ -233,7 +233,7 @@ export function ScoreEntry({
         </p>
       </header>
 
-      <div className="mt-6 flex gap-2 overflow-x-auto pb-2 animate-fade">
+      <div className="mt-6 flex gap-2 overflow-x-auto pb-2 animate-fade" data-swipe-ignore>
         {roundHoles.map((h) => {
           const scored = scores[h.hole_number] != null;
           const isActive = h.hole_number === activeHole;

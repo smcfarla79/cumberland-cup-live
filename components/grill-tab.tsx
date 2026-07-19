@@ -104,6 +104,7 @@ export function GrillTab() {
       <nav
         className="mt-6 flex gap-2 overflow-x-auto pb-1 animate-fade"
         aria-label="Menu sections"
+        data-swipe-ignore
       >
         {[
           { id: "cocktails", label: "Cocktails" },

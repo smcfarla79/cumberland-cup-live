@@ -361,7 +361,7 @@ export function ScoreTab({
           </div>
         </div>
 
-        <div className="mt-4 flex gap-2 overflow-x-auto pb-1 animate-fade">
+        <div className="mt-4 flex gap-2 overflow-x-auto pb-1 animate-fade" data-swipe-ignore>
           {competitionRounds.map((round) => {
             const active = round.id === selectedRound.id;
             return (
