@@ -11,6 +11,7 @@ import { PinGate } from "@/components/pin-gate";
 import { PlayTab } from "@/components/play-tab";
 import { PlayerPicker } from "@/components/player-picker";
 import { TeamsTab } from "@/components/teams-tab";
+import { useEdgeTabSwipe } from "@/hooks/use-edge-tab-swipe";
 import { clearSession, getSession, isSessionValid, setSession } from "@/lib/session";
 import { createClient } from "@/lib/supabase/client";
 import type {
@@ -37,6 +38,7 @@ export function CupApp() {
   const [courseName, setCourseName] = useState("The Course at Sewanee");
   const [session, setSessionState] = useState(getSession());
   const [pinUnlocked, setPinUnlocked] = useState(false);
+  const tabSwipe = useEdgeTabSwipe(tab, setTab);
 
   const bootstrap = useEffectEvent(async () => {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -301,7 +303,12 @@ export function CupApp() {
   }
 
   return (
-    <div className="min-h-dvh bg-fog">
+    <div
+      className="min-h-dvh bg-fog"
+      onTouchStart={tabSwipe.onTouchStart}
+      onTouchEnd={tabSwipe.onTouchEnd}
+      onTouchCancel={tabSwipe.onTouchCancel}
+    >
       <AppTabs
         active={tab}
         onChange={setTab}

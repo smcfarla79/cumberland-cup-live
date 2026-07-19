@@ -1,16 +1,8 @@
 "use client";
 
 import { BrandLogo } from "@/components/brand-logo";
+import { APP_TABS } from "@/lib/app-tabs";
 import type { AppTab } from "@/lib/types";
-
-const TABS: { id: AppTab; label: string }[] = [
-  { id: "home", label: "Home" },
-  { id: "cup", label: "Cup" },
-  { id: "play", label: "Play" },
-  { id: "teams", label: "Teams" },
-  { id: "course", label: "Card" },
-  { id: "grill", label: "Grill" },
-];
 
 type AppTabsProps = {
   active: AppTab;
@@ -45,7 +37,7 @@ export function AppTabs({ active, onChange, playerName, onSignOut }: AppTabsProp
           className="mt-3 flex gap-1 rounded-full border border-mist/70 bg-mist/40 p-1 shadow-inner"
           aria-label="Main"
         >
-          {TABS.map((tab) => {
+          {APP_TABS.map((tab) => {
             const isActive = tab.id === active;
             return (
               <button
