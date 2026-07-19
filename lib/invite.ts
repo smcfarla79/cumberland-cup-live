@@ -19,12 +19,11 @@ export const INVITE_CHAMPIONS_RIGHT = [
 export const INVITE_HOST = "Mr. Benjamin Clune";
 
 export const INVITE_COPY = {
-  cordially: "cordially invite you",
-  toParticipate: "to participate in the",
+  cordially: "cordially invite you to participate in the",
   yearLine: "Two Thousand and Twenty Six",
   eventName: "Cumberland Cup",
-  toBeHeld: "to be held",
-  dates: "the 30th, 31st, and 1st",
+  toBeHeld: "to be held the",
+  dates: "30th, 31st, and 1st",
   months: "of July and August",
   addressLine1: "444 Green's View Road",
   addressLine2: "Sewanee, TN 37383",

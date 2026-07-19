@@ -36,7 +36,7 @@ export function RoundPicker({
           <button
             type="button"
             onClick={onSignOut}
-            className="shrink-0 text-sm text-muted underline-offset-2 hover:text-ink hover:underline"
+            className="shrink-0 rounded-full border border-mist bg-white/70 px-3 py-1.5 text-xs font-medium text-muted transition hover:border-fairway/40 hover:text-ink"
           >
             Switch player
           </button>
@@ -47,7 +47,7 @@ export function RoundPicker({
         <button
           type="button"
           onClick={onOpenBoard}
-          className="w-full border border-pine bg-pine px-4 py-4 text-left text-fog transition hover:brightness-110"
+          className="w-full rounded-2xl border border-pine bg-pine px-5 py-4 text-left text-fog shadow-[0_8px_22px_rgba(12,31,24,0.3)] transition hover:brightness-110"
         >
           <span className="block text-xs tracking-wide text-gold uppercase">
             Spectator
@@ -57,7 +57,7 @@ export function RoundPicker({
         <button
           type="button"
           onClick={onOpenDraft}
-          className="w-full border border-mist bg-white px-4 py-4 text-left transition hover:border-fairway"
+          className="w-full rounded-2xl border border-mist bg-white px-5 py-4 text-left shadow-[0_4px_14px_rgba(20,32,27,0.06)] transition hover:border-fairway hover:shadow-[0_6px_18px_rgba(20,32,27,0.1)]"
         >
           <span className="block text-xs tracking-wide text-fairway uppercase">
             Draft night
@@ -74,7 +74,7 @@ export function RoundPicker({
             <button
               type="button"
               onClick={() => onSelect(round)}
-              className="w-full border border-mist bg-white px-4 py-4 text-left transition hover:border-fairway"
+              className="w-full rounded-2xl border border-mist bg-white px-5 py-4 text-left shadow-[0_4px_14px_rgba(20,32,27,0.06)] transition hover:border-fairway hover:shadow-[0_6px_18px_rgba(20,32,27,0.1)]"
             >
               <span className="block text-xs tracking-wide text-fairway uppercase">
                 Day {round.day_number}

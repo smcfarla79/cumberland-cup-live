@@ -440,7 +440,7 @@ export function MatchesTab({
             setAdjusting(false);
             setSelectedPlayerId(null);
           }}
-          className="w-full border border-mist bg-white px-3 py-3 text-ink outline-none focus:border-fairway"
+          className="w-full rounded-2xl border border-mist bg-white px-4 py-3 text-ink shadow-[0_4px_14px_rgba(20,32,27,0.06)] outline-none focus:border-fairway"
         >
           {competitionRounds.map((round) => (
             <option key={round.id} value={round.id}>
@@ -460,8 +460,10 @@ export function MatchesTab({
               setMessage("");
             }}
             className={[
-              "w-full px-4 py-3 text-sm font-semibold",
-              adjusting ? "border border-pine text-pine" : "bg-pine text-fog",
+              "w-full rounded-2xl px-4 py-3 text-sm font-semibold transition",
+              adjusting
+                ? "border border-pine bg-white text-pine"
+                : "bg-pine text-fog shadow-[0_4px_14px_rgba(12,31,24,0.3)] hover:brightness-110",
             ].join(" ")}
           >
             {adjusting ? "Done adjusting" : "Adjust lineups"}
@@ -470,7 +472,7 @@ export function MatchesTab({
       ) : null}
 
       {adjusting && isAdmin ? (
-        <div className="mt-4 border border-fairway/40 bg-fog/80 p-4 animate-fade">
+        <div className="mt-4 rounded-2xl border border-fairway/40 bg-fog/80 p-4 animate-fade">
           <p className="text-sm text-ink">
             Tap someone in the pool, then tap an empty slot on a match. Tap{" "}
             <span className="font-semibold">×</span> on a lined-up player to
@@ -501,7 +503,7 @@ export function MatchesTab({
                                 )
                               }
                               className={[
-                                "px-3 py-2 text-sm",
+                                "rounded-full px-3.5 py-2 text-sm transition",
                                 selected
                                   ? "bg-pine text-fog ring-2 ring-fairway ring-offset-2"
                                   : "border border-mist bg-white text-ink hover:border-fairway",
@@ -528,7 +530,7 @@ export function MatchesTab({
       ) : null}
 
       {isAdmin && !adjusting && canCreateAnotherMatch ? (
-        <div className="mt-6 border border-mist bg-white p-4 animate-fade">
+        <div className="mt-6 rounded-2xl border border-mist bg-white p-4 shadow-[0_6px_20px_rgba(20,32,27,0.07)] animate-fade">
           <h2 className="text-sm font-semibold tracking-wide text-fairway uppercase">
             New match · {sideSize}v{sideSize}
           </h2>
@@ -554,7 +556,7 @@ export function MatchesTab({
                             type="button"
                             onClick={() => togglePick(team.id, player.id)}
                             className={[
-                              "w-full px-3 py-2 text-left text-sm",
+                              "w-full rounded-xl px-3 py-2 text-left text-sm transition",
                               selected
                                 ? "bg-pine text-fog"
                                 : "border border-mist text-ink hover:border-fairway",
@@ -574,7 +576,7 @@ export function MatchesTab({
             type="button"
             disabled={busy}
             onClick={() => void createMatch()}
-            className="mt-4 w-full bg-pine px-4 py-3 text-sm font-semibold text-fog disabled:opacity-50"
+            className="mt-4 w-full rounded-2xl bg-pine px-4 py-3 text-sm font-semibold text-fog shadow-[0_4px_14px_rgba(12,31,24,0.3)] transition hover:brightness-110 disabled:opacity-50"
           >
             Add match
           </button>
@@ -597,7 +599,10 @@ export function MatchesTab({
               sideA.length < match.side_size || sideB.length < match.side_size;
 
             return (
-              <li key={match.id} className="border border-mist bg-white p-4">
+              <li
+                key={match.id}
+                className="rounded-2xl border border-mist bg-white p-4 shadow-[0_6px_20px_rgba(20,32,27,0.07)]"
+              >
                 <div className="flex items-start justify-between gap-3">
                   <button
                     type="button"
@@ -699,7 +704,7 @@ export function MatchesTab({
                                       )
                                     }
                                     className={[
-                                      "w-full border border-dashed px-2 py-1.5 text-left text-sm",
+                                      "w-full rounded-xl border border-dashed px-2.5 py-1.5 text-left text-sm",
                                       selectedPlayerId &&
                                       teamIdForPlayer(selectedPlayerId) ===
                                         team.id

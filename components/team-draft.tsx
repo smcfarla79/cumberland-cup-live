@@ -133,7 +133,7 @@ export function TeamDraft({
         <button
           type="button"
           onClick={onBack}
-          className="text-sm text-muted hover:text-ink"
+          className="rounded-full border border-mist bg-white/70 px-3 py-1.5 text-xs font-medium text-muted transition hover:border-fairway/40 hover:text-ink"
         >
           ← Back
         </button>
@@ -151,7 +151,10 @@ export function TeamDraft({
             teamIndex === 0 ? "gold" : "green",
           );
           return (
-            <div key={team.id} className="border border-mist bg-white p-4">
+            <div
+              key={team.id}
+              className="rounded-2xl border border-mist bg-white p-4 shadow-[0_6px_20px_rgba(20,32,27,0.07)]"
+            >
               <div className="flex items-center justify-between gap-3">
                 <div className="flex items-center gap-2">
                   <TeamSwatch color={accent} className="h-3 w-3" />
@@ -170,7 +173,7 @@ export function TeamDraft({
                   members.map((player) => (
                     <li
                       key={player.id}
-                      className="flex items-center justify-between gap-3 border border-mist px-3 py-2"
+                      className="flex items-center justify-between gap-3 rounded-xl border border-mist px-3 py-2"
                     >
                       <span className="text-sm" style={{ color: accent }}>
                         {player.display_name}
@@ -191,7 +194,7 @@ export function TeamDraft({
           );
         })}
 
-        <div className="border border-mist bg-white p-4">
+        <div className="rounded-2xl border border-mist bg-white p-4 shadow-[0_6px_20px_rgba(20,32,27,0.07)]">
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-semibold text-ink">Unassigned</h2>
             <span className="text-sm text-muted">{unassigned.length}</span>
@@ -203,7 +206,7 @@ export function TeamDraft({
               unassigned.map((player) => (
                 <li
                   key={player.id}
-                  className="border border-mist px-3 py-3"
+                  className="rounded-xl border border-mist px-3 py-3"
                 >
                   <p className="text-sm font-medium text-ink">
                     {player.display_name}
@@ -218,7 +221,7 @@ export function TeamDraft({
                           membersFor(team.id).length >= TEAM_CAPACITY
                         }
                         onClick={() => void assignPlayer(player.id, team.id)}
-                        className="flex-1 border border-pine bg-pine px-2 py-2 text-xs font-semibold text-fog transition hover:brightness-110 disabled:opacity-40"
+                        className="flex-1 rounded-full border border-pine bg-pine px-2 py-2 text-xs font-semibold text-fog transition hover:brightness-110 disabled:opacity-40"
                       >
                         {team.name}
                       </button>

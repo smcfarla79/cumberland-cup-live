@@ -44,7 +44,7 @@ export function GrillTab() {
       </header>
 
       <div className="mt-6 grid gap-3 sm:grid-cols-2 animate-fade">
-        <div className="border border-mist bg-white px-4 py-3">
+        <div className="rounded-2xl border border-mist bg-white px-4 py-3.5 shadow-[0_4px_14px_rgba(20,32,27,0.06)]">
           <p
             className="text-[11px] font-semibold tracking-[0.14em] uppercase"
             style={{ color: SEWANEE_PURPLE }}
@@ -64,7 +64,7 @@ export function GrillTab() {
           </ul>
         </div>
 
-        <div className="border border-mist bg-white px-4 py-3">
+        <div className="rounded-2xl border border-mist bg-white px-4 py-3.5 shadow-[0_4px_14px_rgba(20,32,27,0.06)]">
           <p
             className="text-[11px] font-semibold tracking-[0.14em] uppercase"
             style={{ color: SEWANEE_PURPLE }}
@@ -114,7 +114,7 @@ export function GrillTab() {
           <a
             key={link.id}
             href={`#grill-${link.id}`}
-            className="shrink-0 border px-3 py-1.5 text-xs font-semibold tracking-wide uppercase"
+            className="shrink-0 rounded-full border px-3.5 py-1.5 text-xs font-semibold tracking-wide uppercase transition hover:opacity-80"
             style={{
               borderColor: `${SEWANEE_PURPLE}44`,
               color: SEWANEE_PURPLE,
@@ -133,7 +133,7 @@ export function GrillTab() {
             id={`grill-${section.id}`}
             className={
               section.highlighted
-                ? "border px-3 py-3 sm:px-4"
+                ? "rounded-2xl border px-3.5 py-3.5 sm:px-4"
                 : undefined
             }
             style={

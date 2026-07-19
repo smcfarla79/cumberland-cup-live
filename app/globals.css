@@ -102,131 +102,453 @@ body {
     linear-gradient(160deg, #0c1f18 0%, #16352a 45%, #1f3d30 100%);
 }
 
-.invite-scene {
-  --env-cream: #f4efe4;
+.invite-eyebrow,
+.invite-skip-hint {
+  transition: opacity 0.4s ease;
+}
+
+.invite-frame {
   --env-green: #1a3d2e;
-  --env-green-deep: #0f2920;
+  --env-green-deep: #0e241b;
+  --env-green-light: #2c5643;
   --env-gold: #c4a35a;
+  --env-gold-bright: #e6c777;
+  --ease-soft: cubic-bezier(0.33, 1, 0.68, 1);
+  --ease-glide: cubic-bezier(0.65, 0, 0.35, 1);
   position: relative;
-  height: min(72vh, 640px);
-  perspective: 1200px;
+  height: 16rem;
+  max-width: 24rem;
+  margin: 0 auto;
+  perspective: 1600px;
+  transition:
+    height 1.1s var(--ease-glide) 0.45s,
+    max-width 1.1s var(--ease-glide) 0.45s;
+}
+
+.invite-frame.is-full {
+  height: min(82vh, 720px);
+  max-width: min(94vw, 30rem);
+}
+
+/* Envelope ----------------------------------------------------- */
+
+.invite-envelope {
+  position: absolute;
+  left: 3%;
+  right: 3%;
+  bottom: 0;
+  height: 13rem;
+  animation:
+    invite-envelope-in 0.9s var(--ease-soft) backwards,
+    invite-float 5s ease-in-out 0.9s infinite;
+  transition: opacity 0.75s ease 0.2s;
+}
+
+@keyframes invite-envelope-in {
+  from {
+    opacity: 0;
+    transform: translateY(1.6rem) scale(0.94);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes invite-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-0.3rem);
+  }
+}
+
+.invite-frame.is-risen .invite-envelope {
+  opacity: 0;
 }
 
 .invite-envelope-back {
   position: absolute;
-  left: 5%;
-  right: 5%;
-  bottom: 8%;
-  height: 42%;
-  background: linear-gradient(180deg, #2a5240 0%, var(--env-green-deep) 100%);
-  border: 1px solid rgba(196, 163, 90, 0.35);
-  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.45);
+  inset: 0;
+  border-radius: 0.7rem;
+  background: linear-gradient(
+    180deg,
+    var(--env-green-light) 0%,
+    var(--env-green) 45%,
+    var(--env-green-deep) 100%
+  );
+  border: 1px solid rgba(196, 163, 90, 0.45);
+  box-shadow:
+    0 26px 64px rgba(0, 0, 0, 0.55),
+    0 8px 20px rgba(0, 0, 0, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
   z-index: 1;
+}
+
+.invite-flap-shadow {
+  position: absolute;
+  inset: 0;
+  height: 62%;
+  border-radius: 0.7rem 0.7rem 0 0;
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.4), transparent 80%);
+  clip-path: polygon(0 0, 50% 68%, 100% 0, 100% 100%, 0 100%);
+  z-index: 2;
+  opacity: 0;
+  transition: opacity 0.6s ease 0.2s;
+}
+
+.invite-frame.is-open .invite-flap-shadow {
+  opacity: 1;
 }
 
 .invite-envelope-front {
   position: absolute;
-  left: 5%;
-  right: 5%;
-  bottom: 8%;
-  height: 38%;
-  background: linear-gradient(185deg, #244a3a 0%, var(--env-green) 55%, #16352a 100%);
-  border: 1px solid rgba(196, 163, 90, 0.4);
-  clip-path: polygon(0 18%, 50% 55%, 100% 18%, 100% 100%, 0 100%);
+  inset: 0;
+  border-radius: 0.7rem;
+  overflow: hidden;
   z-index: 4;
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
-  padding-bottom: 1.1rem;
-  transition: transform 0.9s cubic-bezier(0.22, 1, 0.36, 1);
+  pointer-events: none;
 }
 
-.invite-wax {
-  display: inline-flex;
-  height: 2.4rem;
-  width: 2.4rem;
-  align-items: center;
-  justify-content: center;
-  border-radius: 999px;
-  background: radial-gradient(circle at 35% 30%, #e0c57a, #9a7a35 70%);
-  color: #1a2e24;
-  font-family: var(--font-display), Georgia, serif;
-  font-size: 0.7rem;
-  letter-spacing: 0.06em;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+.invite-envelope-front::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(185deg, #2a5240 0%, var(--env-green) 50%, #142e24 100%);
+  clip-path: polygon(0 20%, 50% 64%, 100% 20%, 100% 100%, 0 100%);
+  filter: drop-shadow(0 -1px 0 rgba(196, 163, 90, 0.4));
+}
+
+.invite-front-sheen {
+  position: absolute;
+  inset: 0;
+  clip-path: polygon(0 20%, 50% 64%, 100% 20%, 100% 100%, 0 100%);
+  background: linear-gradient(
+    115deg,
+    transparent 30%,
+    rgba(230, 199, 119, 0.1) 45%,
+    rgba(255, 255, 255, 0.09) 50%,
+    transparent 65%
+  );
+  transform: translateX(-120%);
+  animation: invite-sheen 3.6s var(--ease-glide) 1.1s infinite;
+}
+
+@keyframes invite-sheen {
+  0% {
+    transform: translateX(-120%);
+  }
+  55%,
+  100% {
+    transform: translateX(120%);
+  }
 }
 
 .invite-flap {
   position: absolute;
-  left: 5%;
-  right: 5%;
-  bottom: calc(8% + 28%);
-  height: 28%;
-  background: linear-gradient(180deg, #3a6550 0%, #244a3a 100%);
-  border: 1px solid rgba(196, 163, 90, 0.35);
-  clip-path: polygon(0 100%, 50% 8%, 100% 100%);
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 64%;
+  border-radius: 0.7rem 0.7rem 0 0;
+  background: linear-gradient(180deg, #3d6e55 0%, #26503e 60%, var(--env-green) 100%);
+  clip-path: polygon(0 0, 0 6%, 46.5% 97%, 50% 100%, 53.5% 97%, 100% 6%, 100% 0);
   transform-origin: top center;
   transform: rotateX(0deg);
   z-index: 5;
-  transition: transform 1s cubic-bezier(0.22, 1, 0.36, 1);
+  transition: transform 1.35s var(--ease-glide);
   backface-visibility: hidden;
+  filter: drop-shadow(0 1px 0 rgba(196, 163, 90, 0.45))
+    drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3));
 }
 
-.invite-scene.is-open .invite-flap {
-  transform: rotateX(168deg);
+.invite-flap-liner {
+  position: absolute;
+  inset: 0;
+  clip-path: polygon(0 0, 0 5%, 46.5% 96%, 50% 99%, 53.5% 96%, 100% 5%, 100% 0);
+  background: linear-gradient(180deg, rgba(230, 199, 119, 0.16), transparent 35%);
+}
+
+.invite-frame.is-open .invite-flap {
+  transform: rotateX(-166deg);
   z-index: 0;
 }
 
+/* Gold ribbon wrap ------------------------------------------------ */
+
+.invite-ribbons {
+  position: absolute;
+  inset: 0;
+  z-index: 6;
+  pointer-events: none;
+}
+
+.invite-ribbon-h,
+.invite-ribbon-v,
+.invite-ribbon-tail {
+  position: absolute;
+  box-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.35);
+}
+
+.invite-ribbon-h {
+  top: 50%;
+  height: 1rem;
+  margin-top: -0.5rem;
+  width: 51%;
+  background: linear-gradient(
+    180deg,
+    #f0dda0 0%,
+    var(--env-gold-bright) 18%,
+    #b8923f 60%,
+    #8a6a28 100%
+  );
+  transition:
+    transform 1.15s var(--ease-glide),
+    opacity 0.85s ease 0.2s;
+}
+
+.invite-ribbon-h-l {
+  left: 0;
+  border-radius: 3px 0 0 3px;
+  transform-origin: left center;
+}
+
+.invite-ribbon-h-r {
+  right: 0;
+  border-radius: 0 3px 3px 0;
+  transform-origin: right center;
+}
+
+.invite-ribbon-v {
+  left: 50%;
+  width: 1rem;
+  margin-left: -0.5rem;
+  top: -3%;
+  bottom: -3%;
+  border-radius: 3px;
+  background: linear-gradient(
+    90deg,
+    #f0dda0 0%,
+    var(--env-gold-bright) 18%,
+    #b8923f 60%,
+    #8a6a28 100%
+  );
+  transition:
+    transform 1.2s var(--ease-glide),
+    opacity 0.85s ease 0.25s;
+}
+
+.invite-frame.is-unwrapped .invite-ribbon-h-l {
+  transform: translateX(-150%) rotate(-9deg);
+  opacity: 0;
+}
+
+.invite-frame.is-unwrapped .invite-ribbon-h-r {
+  transform: translateX(150%) rotate(9deg);
+  opacity: 0;
+}
+
+.invite-frame.is-unwrapped .invite-ribbon-v {
+  transform: translateY(-165%) rotate(5deg);
+  opacity: 0;
+}
+
+/* Loose ribbon tails that swirl away as the wrap comes undone */
+.invite-ribbon-tail {
+  top: 46%;
+  width: 0.85rem;
+  height: 36%;
+  border-radius: 999px;
+  opacity: 0;
+  background: linear-gradient(
+    90deg,
+    #f0dda0 0%,
+    var(--env-gold-bright) 25%,
+    #b8923f 70%,
+    #8a6a28 100%
+  );
+}
+
+.invite-ribbon-tail-l {
+  left: 44%;
+}
+
+.invite-ribbon-tail-r {
+  left: 52%;
+}
+
+.invite-frame.is-unwrapped .invite-ribbon-tail-l {
+  animation: invite-tail-l 1.2s var(--ease-soft) both;
+}
+
+.invite-frame.is-unwrapped .invite-ribbon-tail-r {
+  animation: invite-tail-r 1.2s var(--ease-soft) 0.1s both;
+}
+
+@keyframes invite-tail-l {
+  0% {
+    opacity: 0;
+    transform: translate(0, 0) rotate(0deg) scaleY(0.35);
+  }
+  18% {
+    opacity: 0.95;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-7rem, -5rem) rotate(-72deg) scaleY(1.1);
+  }
+}
+
+@keyframes invite-tail-r {
+  0% {
+    opacity: 0;
+    transform: translate(0, 0) rotate(0deg) scaleY(0.35);
+  }
+  18% {
+    opacity: 0.95;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(7rem, -5.5rem) rotate(74deg) scaleY(1.15);
+  }
+}
+
+/* Wax seal at the ribbon crossing --------------------------------- */
+
+.invite-seal {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 3rem;
+  height: 3rem;
+  margin: -1.5rem 0 0 -1.5rem;
+  filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.4));
+  transition: opacity 0.45s ease 0.35s;
+}
+
+.invite-frame.is-unwrapped .invite-seal {
+  opacity: 0;
+}
+
+.invite-seal-half {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  width: 50%;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-display), Georgia, serif;
+  font-size: 0.72rem;
+  letter-spacing: 0.04em;
+  color: #241a0c;
+  background: radial-gradient(circle at 50% 45%, #e6c777 0%, #a9822f 75%, #7c5f22 100%);
+  box-shadow: inset 0 0 8px rgba(0, 0, 0, 0.35);
+  transition: transform 0.85s cubic-bezier(0.34, 1.25, 0.64, 1);
+}
+
+.invite-seal-half-l {
+  left: 0;
+  border-radius: 999px 0 0 999px;
+  justify-content: flex-end;
+  padding-right: 0.05rem;
+}
+
+.invite-seal-half-r {
+  right: 0;
+  border-radius: 0 999px 999px 0;
+  justify-content: flex-start;
+  padding-left: 0.05rem;
+}
+
+.invite-frame.is-cracked .invite-seal-half-l {
+  transform: translate(-0.85rem, 0.5rem) rotate(-24deg);
+}
+
+.invite-frame.is-cracked .invite-seal-half-r {
+  transform: translate(0.85rem, 0.5rem) rotate(24deg);
+}
+
+/* Card: tucked in envelope → rises → full page -------------------- */
+
 .invite-card {
   position: absolute;
-  left: 10%;
-  right: 10%;
-  bottom: 22%;
+  left: 8%;
+  right: 8%;
+  bottom: 6%;
   z-index: 3;
-  transform: translateY(18%) scale(0.92);
-  opacity: 0.85;
+  transform: translateY(6%) scale(0.86);
+  opacity: 0;
+  cursor: default;
+  will-change: transform, opacity;
   transition:
-    transform 1.15s cubic-bezier(0.22, 1, 0.36, 1) 0.35s,
-    opacity 0.6s ease 0.2s;
+    transform 1.25s cubic-bezier(0.34, 1.15, 0.64, 1),
+    opacity 0.6s ease,
+    left 1s var(--ease-glide),
+    right 1s var(--ease-glide),
+    bottom 1s var(--ease-glide);
 }
 
-.invite-scene.is-open .invite-card {
-  transform: translateY(-6%) scale(1);
+.invite-frame.is-open .invite-card {
   opacity: 1;
+  transform: translateY(1%) scale(0.9);
 }
 
-.invite-scene.is-revealed .invite-card {
-  transform: translateY(-12%) scale(1);
+.invite-frame.is-risen .invite-card {
+  opacity: 1;
+  transform: translateY(-40%) scale(0.98);
+}
+
+.invite-frame.is-full .invite-card {
+  left: 0;
+  right: 0;
+  bottom: 0;
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  cursor: pointer;
 }
 
 .invite-card-inner {
   background: linear-gradient(180deg, #faf7f0 0%, #f0ebe0 100%);
-  border: 2px solid var(--env-green);
+  border: 1px solid var(--env-green);
+  border-radius: 0.5rem;
   box-shadow:
-    inset 0 0 0 1px var(--env-gold),
-    0 16px 36px rgba(0, 0, 0, 0.35);
-  padding: 1.1rem 1rem 1.15rem;
+    inset 0 0 0 1px rgba(196, 163, 90, 0.9),
+    inset 0 0 0 4px #faf7f0,
+    inset 0 0 0 5px rgba(26, 61, 46, 0.5),
+    0 18px 44px rgba(0, 0, 0, 0.42);
+  padding: 1.3rem 1.15rem 1.35rem;
   text-align: center;
   color: #1a241e;
-  max-height: min(58vh, 520px);
+  height: 100%;
   overflow-y: auto;
+}
+
+.invite-frame:not(.is-full) .invite-card-inner {
+  max-height: 14.2rem;
 }
 
 .invite-champions-title {
   font-family: var(--font-invite-serif), Georgia, serif;
-  font-size: 0.78rem;
-  letter-spacing: 0.04em;
+  font-weight: 600;
+  font-size: 0.82rem;
+  letter-spacing: 0.05em;
   color: #1a3d2e;
 }
 
 .invite-champions-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 0.35rem 0.75rem;
-  margin-top: 0.55rem;
+  gap: 0.3rem 0.9rem;
+  margin-top: 0.6rem;
   font-family: var(--font-invite-script), cursive;
-  font-size: 0.78rem;
-  line-height: 1.35;
+  font-size: 0.95rem;
+  line-height: 1.5;
   color: #243028;
 }
 
@@ -237,96 +559,52 @@ body {
 }
 
 .invite-host {
-  margin-top: 0.85rem;
+  margin-top: 0.4rem;
+  font-family: var(--font-invite-script), cursive;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  color: #243028;
+}
+
+.invite-cordially {
+  margin-top: 0.9rem;
   font-family: var(--font-invite-serif), Georgia, serif;
-  font-size: 0.72rem;
-  line-height: 1.45;
+  font-style: italic;
+  font-size: 0.86rem;
+  line-height: 1.5;
   color: #2a332c;
 }
 
-.invite-script {
-  font-family: var(--font-invite-script), cursive;
-  font-size: 0.95rem;
-  color: #1a241e;
-}
-
 .invite-year {
-  margin-top: 0.65rem;
+  margin-top: 0.7rem;
   font-family: var(--font-invite-script), cursive;
-  font-size: 1.05rem;
+  font-size: 1.35rem;
   color: #1a3d2e;
 }
 
 .invite-event {
   margin-top: 0.1rem;
   font-family: var(--font-invite-script), cursive;
-  font-size: clamp(1.65rem, 7vw, 2.15rem);
+  font-size: clamp(2rem, 9vw, 3rem);
   line-height: 1.05;
   color: #14201b;
 }
 
 .invite-details,
 .invite-address {
-  margin-top: 0.55rem;
+  margin-top: 0.7rem;
   font-family: var(--font-invite-serif), Georgia, serif;
-  font-size: 0.72rem;
-  line-height: 1.4;
+  font-size: 0.86rem;
+  line-height: 1.45;
   color: #2a332c;
 }
 
 .invite-address {
-  font-style: italic;
-  margin-top: 0.35rem;
+  margin-top: 0.4rem;
 }
 
-.invite-ribbon {
-  position: absolute;
-  width: 0.55rem;
-  height: 55%;
-  bottom: 35%;
-  border-radius: 2px;
-  opacity: 0;
-  transform: translateY(40%) scaleY(0.4);
-  z-index: 2;
-  transition:
-    opacity 0.5s ease 0.25s,
-    transform 0.9s cubic-bezier(0.22, 1, 0.36, 1) 0.25s;
-}
-
-.invite-ribbon-a {
-  left: 22%;
-  background: linear-gradient(180deg, #e8d5a0, #c4a35a 40%, #8b6b2e);
-  transform: translateY(40%) rotate(-12deg) scaleY(0.4);
-}
-
-.invite-ribbon-b {
-  left: 48%;
-  background: linear-gradient(180deg, #f0e4b8, #d4b56a 45%, #a07f35);
-  transform: translateY(40%) rotate(3deg) scaleY(0.4);
-}
-
-.invite-ribbon-c {
-  right: 22%;
-  left: auto;
-  background: linear-gradient(180deg, #e0c878, #b8923f 50%, #7a5f28);
-  transform: translateY(40%) rotate(14deg) scaleY(0.4);
-}
-
-.invite-scene.is-open .invite-ribbon {
-  opacity: 0.95;
-  transform: translateY(-8%) scaleY(1);
-}
-
-.invite-scene.is-open .invite-ribbon-a {
-  transform: translateY(-10%) rotate(-14deg) scaleY(1.05);
-}
-
-.invite-scene.is-open .invite-ribbon-b {
-  transform: translateY(-14%) rotate(2deg) scaleY(1.08);
-}
-
-.invite-scene.is-open .invite-ribbon-c {
-  transform: translateY(-9%) rotate(16deg) scaleY(1.05);
+.invite-cta {
+  animation: fade-in 0.4s ease-out both;
 }
 
 .font-invite-script {

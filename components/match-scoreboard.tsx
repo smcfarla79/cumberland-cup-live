@@ -196,7 +196,7 @@ export function MatchScoreboard({
         : null;
 
     return (
-      <div className="border border-mist bg-white p-3">
+      <div className="rounded-2xl border border-mist bg-white p-3.5 shadow-[0_6px_20px_rgba(20,32,27,0.07)]">
         <div className="mb-2 flex items-center justify-between gap-2">
           <p
             className="text-sm font-semibold"
@@ -234,7 +234,7 @@ export function MatchScoreboard({
               <li
                 key={mp.player_id}
                 className={[
-                  "border px-3 py-3",
+                  "rounded-xl border px-3 py-3",
                   editable ? "border-mist bg-fog/40" : "border-mist/60 bg-fog/20",
                   isYou ? "ring-2 ring-fairway/40" : "",
                 ].join(" ")}
@@ -270,7 +270,7 @@ export function MatchScoreboard({
                       type="button"
                       disabled={saving}
                       onClick={() => bump(mp.player_id, -1)}
-                      className="border border-mist bg-white py-3 text-xl text-ink disabled:opacity-50"
+                      className="rounded-xl border border-mist bg-white py-3 text-xl text-ink shadow-sm transition hover:border-fairway/40 active:scale-[0.97] disabled:opacity-50"
                     >
                       −
                     </button>
@@ -278,7 +278,7 @@ export function MatchScoreboard({
                       type="button"
                       disabled={saving}
                       onClick={() => void saveStrokes(mp.player_id, hole.par)}
-                      className="border border-pine bg-pine py-3 text-xs font-semibold text-fog disabled:opacity-50"
+                      className="rounded-xl border border-pine bg-pine py-3 text-xs font-semibold text-fog shadow-[0_2px_8px_rgba(12,31,24,0.3)] transition hover:brightness-110 active:scale-[0.97] disabled:opacity-50"
                     >
                       Par
                     </button>
@@ -286,7 +286,7 @@ export function MatchScoreboard({
                       type="button"
                       disabled={saving}
                       onClick={() => bump(mp.player_id, 1)}
-                      className="border border-mist bg-white py-3 text-xl text-ink disabled:opacity-50"
+                      className="rounded-xl border border-mist bg-white py-3 text-xl text-ink shadow-sm transition hover:border-fairway/40 active:scale-[0.97] disabled:opacity-50"
                     >
                       +
                     </button>
@@ -305,7 +305,7 @@ export function MatchScoreboard({
       <button
         type="button"
         onClick={onBack}
-        className="text-sm text-muted hover:text-ink"
+        className="rounded-full border border-mist bg-white/70 px-3 py-1.5 text-xs font-medium text-muted transition hover:border-fairway/40 hover:text-ink"
       >
         ← All matches
       </button>
@@ -334,10 +334,10 @@ export function MatchScoreboard({
               type="button"
               onClick={() => setActiveHole(h.hole_number)}
               className={[
-                "flex h-10 w-10 shrink-0 items-center justify-center border text-xs tabular-nums",
+                "flex h-10 w-10 shrink-0 items-center justify-center rounded-full border text-xs tabular-nums transition-all duration-150",
                 isActive
-                  ? "border-pine bg-pine text-fog"
-                  : "border-mist bg-white text-ink",
+                  ? "border-pine bg-pine text-fog shadow-[0_2px_8px_rgba(12,31,24,0.35)]"
+                  : "border-mist bg-white text-ink hover:border-fairway/40",
               ].join(" ")}
             >
               {h.hole_number}
@@ -347,7 +347,7 @@ export function MatchScoreboard({
       </div>
 
       {hole ? (
-        <div className="mt-4 border border-mist bg-white px-4 py-3 text-sm text-muted">
+        <div className="mt-4 rounded-2xl border border-mist bg-white px-4 py-3 text-sm text-muted shadow-[0_4px_14px_rgba(20,32,27,0.06)]">
           Hole {hole.hole_number} · Par {hole.par}
           {hole.handicap_index != null
             ? ` · Stroke index ${hole.handicap_index}`
@@ -362,7 +362,7 @@ export function MatchScoreboard({
       </div>
 
       {orphaned.length > 0 ? (
-        <div className="mt-3 border border-danger/40 bg-white p-3">
+        <div className="mt-3 rounded-2xl border border-danger/40 bg-white p-3.5 shadow-[0_4px_14px_rgba(20,32,27,0.06)]">
           <p className="text-sm font-semibold text-danger">
             Players missing a team on this match
           </p>
@@ -378,7 +378,7 @@ export function MatchScoreboard({
 
       {message ? <p className="mt-3 text-sm text-danger">{message}</p> : null}
 
-      <div className="mt-6 overflow-x-auto border border-mist bg-white">
+      <div className="mt-6 overflow-x-auto rounded-2xl border border-mist bg-white shadow-[0_6px_20px_rgba(20,32,27,0.07)]">
         <table className="w-full min-w-[520px] border-collapse text-xs">
           <thead>
             <tr className="border-b border-mist bg-fog text-muted">

@@ -134,7 +134,7 @@ export function CourseTab({ courseName, holes }: CourseTabProps) {
       </div>
 
       <div className="mt-4 flex flex-wrap gap-3 text-xs animate-fade">
-        <span className="inline-flex items-center gap-2 border border-mist bg-white px-2.5 py-1.5 text-ink">
+        <span className="inline-flex items-center gap-2 rounded-full border border-mist bg-white px-3 py-1.5 text-ink">
           <span
             className="h-2.5 w-2.5 rounded-full"
             style={{ backgroundColor: "#582C83" }}
@@ -142,7 +142,7 @@ export function CourseTab({ courseName, holes }: CourseTabProps) {
           />
           Purple tees
         </span>
-        <span className="inline-flex items-center gap-2 border border-mist bg-white px-2.5 py-1.5 text-ink">
+        <span className="inline-flex items-center gap-2 rounded-full border border-mist bg-white px-3 py-1.5 text-ink">
           <span
             className="h-2.5 w-2.5 rounded-full border border-ink/30 bg-white"
             aria-hidden
@@ -151,7 +151,7 @@ export function CourseTab({ courseName, holes }: CourseTabProps) {
         </span>
       </div>
 
-      <div className="mt-6 overflow-x-auto border border-mist bg-white animate-fade">
+      <div className="mt-6 overflow-x-auto rounded-2xl border border-mist bg-white shadow-[0_6px_20px_rgba(20,32,27,0.07)] animate-fade">
         <table className="w-full min-w-[760px] border-collapse text-xs sm:text-sm">
           <thead>
             <tr className="border-b border-mist bg-pine text-fog">
@@ -260,7 +260,10 @@ export function CourseTab({ courseName, holes }: CourseTabProps) {
             const frontHole = byNumber.get(flyover.frontHole);
             const backHole = byNumber.get(flyover.backHole);
             return (
-              <li key={flyover.frontHole} className="border border-mist bg-white">
+              <li
+                key={flyover.frontHole}
+                className="overflow-hidden rounded-2xl border border-mist bg-white shadow-[0_4px_14px_rgba(20,32,27,0.06)]"
+              >
                 <button
                   type="button"
                   aria-expanded={isOpen}
@@ -292,7 +295,7 @@ export function CourseTab({ courseName, holes }: CourseTabProps) {
 
                 {isOpen ? (
                   <div className="border-t border-mist bg-fog/40 px-3 pb-3 pt-3 sm:px-4">
-                    <div className="overflow-hidden border border-mist bg-black">
+                    <div className="overflow-hidden rounded-xl border border-mist bg-black">
                       <video
                         key={flyover.src}
                         controls

@@ -56,7 +56,7 @@ function Section({
   children: ReactNode;
 }) {
   return (
-    <section className="mt-8 animate-fade">
+    <section className="mt-4 animate-fade rounded-3xl border border-ink/10 bg-white px-5 py-5 shadow-[0_6px_20px_rgba(20,32,27,0.07)]">
       <h2 className="text-xs font-semibold tracking-[0.16em] text-fairway uppercase">
         {title}
       </h2>
@@ -92,7 +92,7 @@ export function HomeTab() {
   return (
     <div className="mx-auto w-full max-w-2xl px-4 py-5 sm:px-5">
       {/* Brand + weekend */}
-      <div className="atmosphere relative overflow-hidden px-4 py-7 text-fog animate-rise sm:px-6 sm:py-8">
+      <div className="atmosphere relative overflow-hidden rounded-3xl px-5 py-7 text-fog animate-rise ring-1 ring-white/10 shadow-[0_18px_44px_rgba(12,31,24,0.35)] sm:px-6 sm:py-8">
         <div className="relative flex items-start gap-4">
           <BrandLogo
             size={56}
@@ -105,15 +105,21 @@ export function HomeTab() {
             <h1 className="font-display mt-1 text-3xl leading-tight sm:text-4xl">
               The 2026 Cumberland Cup
             </h1>
-            <p className="mt-2 text-sm text-mist/90">{WEEKEND_DATES}</p>
-            <p className="mt-1 text-sm text-mist/75">{COURSE_ADDRESS.name}</p>
+            <div className="mt-3 flex flex-wrap items-center gap-2">
+              <span className="inline-flex items-center rounded-full bg-white/12 px-3 py-1 text-xs font-medium text-fog ring-1 ring-white/20 backdrop-blur-sm">
+                {WEEKEND_DATES}
+              </span>
+              <span className="inline-flex items-center rounded-full bg-gold/20 px-3 py-1 text-xs font-medium text-[#ecd9a8] ring-1 ring-gold/40 backdrop-blur-sm">
+                {COURSE_ADDRESS.name}
+              </span>
+            </div>
           </div>
         </div>
       </div>
 
       {/* Live weather */}
       <section
-        className="relative mt-5 overflow-hidden border border-ink/15 px-4 py-4 animate-fade"
+        className="relative mt-5 overflow-hidden rounded-3xl border border-ink/10 px-5 py-5 animate-fade shadow-[0_10px_30px_rgba(20,32,27,0.12)]"
         style={{ background: theme?.background ?? "#ffffff" }}
       >
         {theme ? <WeatherBackdrop kind={theme.kind} /> : null}
@@ -164,7 +170,7 @@ export function HomeTab() {
                 {weather.daily.map((day) => (
                   <div
                     key={day.date}
-                    className="px-2.5 py-2"
+                    className="rounded-2xl px-3 py-2.5 backdrop-blur-sm"
                     style={{
                       backgroundColor: theme.chipBg,
                       border: `1px solid ${theme.chipBorder}`,

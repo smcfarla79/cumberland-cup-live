@@ -323,7 +323,7 @@ export function ScoreTab({
               <button
                 type="button"
                 onClick={() => setStrokePlayerId(player.id)}
-                className="w-full border border-mist bg-white px-4 py-3.5 text-left text-ink transition hover:border-fairway"
+                className="w-full rounded-2xl border border-mist bg-white px-4 py-3.5 text-left text-ink shadow-[0_4px_14px_rgba(20,32,27,0.06)] transition hover:border-fairway hover:shadow-[0_6px_18px_rgba(20,32,27,0.1)]"
               >
                 {player.display_name}
                 {player.id === sessionPlayerId ? " · you" : ""}
@@ -373,10 +373,10 @@ export function ScoreTab({
                   setSelectedMatchId(null);
                 }}
                 className={[
-                  "shrink-0 px-3 py-2 text-sm font-medium",
+                  "shrink-0 rounded-full px-3.5 py-2 text-sm font-medium transition-all duration-200",
                   active
-                    ? "bg-pine text-fog"
-                    : "border border-mist bg-white text-muted hover:text-ink",
+                    ? "bg-pine text-fog shadow-[0_2px_8px_rgba(12,31,24,0.35)]"
+                    : "border border-mist bg-white text-muted hover:border-fairway/40 hover:text-ink",
                 ].join(" ")}
               >
                 {shortSessionLabel(round)}
@@ -393,7 +393,7 @@ export function ScoreTab({
                   setSelectedMatchId(null);
                 }
               }}
-              className="shrink-0 border border-mist bg-white px-3 py-2 text-sm font-medium text-muted hover:text-ink"
+              className="shrink-0 rounded-full border border-mist bg-white px-3.5 py-2 text-sm font-medium text-muted transition hover:border-fairway/40 hover:text-ink"
             >
               Seeding
             </button>
@@ -407,7 +407,7 @@ export function ScoreTab({
 
         <ul className="mt-4 space-y-3 animate-fade">
           {matches.length === 0 ? (
-            <li className="border border-mist bg-white px-4 py-4 text-sm text-muted">
+            <li className="rounded-2xl border border-mist bg-white px-4 py-4 text-sm text-muted shadow-[0_4px_14px_rgba(20,32,27,0.06)]">
               No matches yet for this session. Admins can set lineups under Play
               → Lineups.
             </li>
@@ -521,7 +521,7 @@ export function ScoreTab({
                 setPickingSession(false);
                 setSelectedMatchId(null);
               }}
-              className="w-full border border-mist bg-white px-4 py-4 text-left transition hover:border-fairway"
+              className="w-full rounded-2xl border border-mist bg-white px-5 py-4 text-left shadow-[0_4px_14px_rgba(20,32,27,0.06)] transition hover:border-fairway hover:shadow-[0_6px_18px_rgba(20,32,27,0.1)]"
             >
               <span className="block text-xs tracking-wide text-fairway uppercase">
                 Day {round.day_number}

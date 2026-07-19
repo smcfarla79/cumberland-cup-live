@@ -115,7 +115,7 @@ export function LiveBoard({
         <button
           type="button"
           onClick={onBack}
-          className="text-sm text-muted hover:text-ink"
+          className="rounded-full border border-mist bg-white/70 px-3 py-1.5 text-xs font-medium text-muted transition hover:border-fairway/40 hover:text-ink"
         >
           ← Back to rounds
         </button>
@@ -135,7 +135,7 @@ export function LiveBoard({
         <select
           value={activeRound?.id ?? ""}
           onChange={(e) => setRoundId(e.target.value)}
-          className="w-full border border-mist bg-white px-3 py-3 text-ink outline-none focus:border-fairway"
+          className="w-full rounded-2xl border border-mist bg-white px-4 py-3 text-ink shadow-[0_4px_14px_rgba(20,32,27,0.06)] outline-none focus:border-fairway"
         >
           {rounds.map((round) => (
             <option key={round.id} value={round.id}>
@@ -156,7 +156,10 @@ export function LiveBoard({
           );
 
           return (
-            <div key={team.id} className="border border-mist bg-white p-4">
+            <div
+              key={team.id}
+              className="rounded-2xl border border-mist bg-white p-4 shadow-[0_6px_20px_rgba(20,32,27,0.07)]"
+            >
               <div className="flex items-start justify-between gap-3">
                 <div className="flex items-center gap-2">
                   <TeamSwatch color={accent} className="h-3 w-3" />

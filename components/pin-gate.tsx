@@ -74,7 +74,7 @@ export function PinGate({ tournamentName, expectedPin, onSuccess }: PinGateProps
     <section className="relative flex min-h-dvh flex-col justify-end overflow-hidden px-6 pb-12 pt-16 text-fog sm:justify-center sm:pb-0">
       <PinDroneBackground />
 
-      <div className="relative z-10 mx-auto w-full max-w-md animate-rise bg-pine-deep/50 px-5 py-8 shadow-[0_20px_60px_rgba(0,0,0,0.45)] backdrop-blur-md ring-1 ring-white/15">
+      <div className="relative z-10 mx-auto w-full max-w-md animate-rise rounded-3xl bg-pine-deep/50 px-6 py-8 shadow-[0_20px_60px_rgba(0,0,0,0.45)] backdrop-blur-md ring-1 ring-white/15">
         <p className="text-sm tracking-[0.22em] text-gold uppercase">
           The Cumberland Cup · 2026
         </p>
@@ -93,7 +93,7 @@ export function PinGate({ tournamentName, expectedPin, onSuccess }: PinGateProps
               autoComplete="one-time-code"
               value={pin}
               onChange={(e) => setPin(e.target.value)}
-              className="w-full border border-white/25 bg-black/40 px-4 py-3.5 text-lg tracking-[0.35em] text-fog outline-none transition focus:border-gold"
+              className="w-full rounded-2xl border border-white/25 bg-black/40 px-4 py-3.5 text-lg tracking-[0.35em] text-fog outline-none transition focus:border-gold"
               placeholder="••••"
               aria-label="Weekend PIN"
             />
@@ -101,7 +101,7 @@ export function PinGate({ tournamentName, expectedPin, onSuccess }: PinGateProps
           {error ? <p className="text-sm text-red-200">{error}</p> : null}
           <button
             type="submit"
-            className="w-full bg-gold px-4 py-3.5 text-sm font-semibold tracking-wide text-pine-deep transition hover:brightness-105"
+            className="w-full rounded-2xl bg-gold px-4 py-3.5 text-sm font-semibold tracking-wide text-pine-deep shadow-[0_6px_18px_rgba(196,163,90,0.35)] transition hover:brightness-105 active:scale-[0.99]"
           >
             Enter the Cup
           </button>

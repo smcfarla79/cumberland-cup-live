@@ -262,7 +262,7 @@ export function CupTab({
   return (
     <section className="mx-auto w-full max-w-2xl px-4 py-5 sm:px-5">
       {/* Overall cup score — always visible at top */}
-      <div className="atmosphere relative overflow-hidden px-3 py-6 text-fog animate-rise sm:px-5 sm:py-7">
+      <div className="atmosphere relative overflow-hidden rounded-3xl px-3 py-6 text-fog animate-rise ring-1 ring-white/10 shadow-[0_18px_44px_rgba(12,31,24,0.35)] sm:px-5 sm:py-7">
         <div className="relative flex items-center justify-between gap-1.5 sm:gap-3">
           <div className="min-w-0 flex-1 text-left">
             <div className="mb-1 flex items-center gap-1.5">
@@ -300,7 +300,7 @@ export function CupTab({
           </div>
         </div>
 
-        <div className="relative mt-5 h-2 w-full overflow-hidden bg-white/15">
+        <div className="relative mt-5 h-2 w-full overflow-hidden rounded-full bg-white/15">
           <div
             className="absolute inset-y-0 left-0 transition-all duration-700"
             style={{
@@ -330,7 +330,7 @@ export function CupTab({
         <button
           type="button"
           onClick={() => onGoToPlay(nowPlaying.round.id)}
-          className="mt-3 w-full border border-pine/40 bg-white px-3 py-2.5 text-left text-sm transition hover:border-pine"
+          className="mt-3 w-full rounded-2xl border border-pine/30 bg-white px-4 py-3 text-left text-sm shadow-[0_4px_14px_rgba(20,32,27,0.08)] transition hover:border-pine hover:shadow-[0_6px_18px_rgba(20,32,27,0.12)]"
         >
           <span className="font-medium text-ink">Your match</span>
           <span className="text-muted">
@@ -355,7 +355,7 @@ export function CupTab({
           <button
             type="button"
             onClick={() => void refresh()}
-            className="shrink-0 text-[11px] text-muted underline-offset-2 hover:text-ink hover:underline"
+            className="shrink-0 rounded-full border border-mist bg-white/70 px-2.5 py-1 text-[11px] font-medium text-muted transition hover:border-fairway/40 hover:text-ink"
           >
             {updatedAt
               ? updatedAt.toLocaleTimeString([], {
@@ -415,7 +415,7 @@ export function CupTab({
                     Lineups not set for this session.
                   </p>
                 ) : (
-                  <div className="border border-ink/20 bg-white">
+                  <div className="overflow-hidden rounded-2xl border border-ink/10 bg-white shadow-[0_6px_20px_rgba(20,32,27,0.07)]">
                     {sessionMatches.map((match, index) => {
                       const sideA = match.players.filter(
                         (p) => p.team_id === teamA.id,
@@ -479,7 +479,7 @@ export function CupTab({
                           {/* Team A */}
                           <div
                             className={[
-                              "min-w-0 rounded-sm px-1.5 py-1",
+                              "min-w-0 rounded-lg px-1.5 py-1",
                               aUp ? "ring-1 ring-inset" : "",
                             ].join(" ")}
                             style={
@@ -542,7 +542,7 @@ export function CupTab({
                           {/* Team B */}
                           <div
                             className={[
-                              "min-w-0 rounded-sm px-1.5 py-1 text-right",
+                              "min-w-0 rounded-lg px-1.5 py-1 text-right",
                               bUp ? "ring-1 ring-inset" : "",
                             ].join(" ")}
                             style={

@@ -36,31 +36,33 @@ export function PlayTab({
   return (
     <div>
       {isAdmin ? (
-        <div className="mx-auto flex max-w-2xl gap-2 px-5 pt-4">
-          <button
-            type="button"
-            onClick={() => setMode("score")}
-            className={[
-              "flex-1 px-3 py-2.5 text-sm font-semibold",
-              mode === "score"
-                ? "bg-pine text-fog"
-                : "border border-mist bg-white text-muted hover:text-ink",
-            ].join(" ")}
-          >
-            Score
-          </button>
-          <button
-            type="button"
-            onClick={() => setMode("lineups")}
-            className={[
-              "flex-1 px-3 py-2.5 text-sm font-semibold",
-              mode === "lineups"
-                ? "bg-pine text-fog"
-                : "border border-mist bg-white text-muted hover:text-ink",
-            ].join(" ")}
-          >
-            Lineups
-          </button>
+        <div className="mx-auto max-w-2xl px-5 pt-4">
+          <div className="flex gap-1 rounded-full border border-mist/70 bg-mist/40 p-1 shadow-inner">
+            <button
+              type="button"
+              onClick={() => setMode("score")}
+              className={[
+                "flex-1 rounded-full px-3 py-2 text-sm font-semibold transition-all duration-200",
+                mode === "score"
+                  ? "bg-pine text-fog shadow-[0_2px_8px_rgba(12,31,24,0.35)]"
+                  : "text-muted hover:bg-white/60 hover:text-ink",
+              ].join(" ")}
+            >
+              Score
+            </button>
+            <button
+              type="button"
+              onClick={() => setMode("lineups")}
+              className={[
+                "flex-1 rounded-full px-3 py-2 text-sm font-semibold transition-all duration-200",
+                mode === "lineups"
+                  ? "bg-pine text-fog shadow-[0_2px_8px_rgba(12,31,24,0.35)]"
+                  : "text-muted hover:bg-white/60 hover:text-ink",
+              ].join(" ")}
+            >
+              Lineups
+            </button>
+          </div>
         </div>
       ) : null}
 

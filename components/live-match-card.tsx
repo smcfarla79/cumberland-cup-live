@@ -99,10 +99,10 @@ export function LiveMatchCard({
       type="button"
       onClick={onClick}
       className={[
-        "w-full overflow-hidden border-2 bg-white text-left transition",
+        "w-full overflow-hidden rounded-2xl border-2 bg-white text-left shadow-[0_6px_20px_rgba(20,32,27,0.07)] transition hover:shadow-[0_8px_24px_rgba(20,32,27,0.11)]",
         includesMe
-          ? "border-pine shadow-[0_0_0_1px_rgba(22,53,42,0.12)]"
-          : "border-ink/20 hover:border-fairway/50",
+          ? "border-pine shadow-[0_0_0_1px_rgba(22,53,42,0.12),0_6px_20px_rgba(20,32,27,0.07)]"
+          : "border-ink/15 hover:border-fairway/50",
       ].join(" ")}
     >
       <div className="flex items-center justify-between gap-2 px-3 py-2">

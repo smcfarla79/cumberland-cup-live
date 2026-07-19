@@ -215,7 +215,7 @@ export function ScoreEntry({
         <button
           type="button"
           onClick={onBack}
-          className="text-sm text-muted hover:text-ink"
+          className="rounded-full border border-mist bg-white/70 px-3 py-1.5 text-xs font-medium text-muted transition hover:border-fairway/40 hover:text-ink"
         >
           ← All rounds
         </button>
@@ -243,12 +243,12 @@ export function ScoreEntry({
               type="button"
               onClick={() => setActiveHole(h.hole_number)}
               className={[
-                "flex h-11 w-11 shrink-0 flex-col items-center justify-center border text-xs",
+                "flex h-11 w-11 shrink-0 flex-col items-center justify-center rounded-full border text-xs transition-all duration-150",
                 isActive
-                  ? "border-pine bg-pine text-fog"
+                  ? "border-pine bg-pine text-fog shadow-[0_2px_8px_rgba(12,31,24,0.35)]"
                   : scored
                     ? "border-fairway bg-white text-ink"
-                    : "border-mist bg-white text-muted",
+                    : "border-mist bg-white text-muted hover:border-fairway/40",
               ].join(" ")}
             >
               <span>{h.hole_number}</span>
@@ -263,7 +263,7 @@ export function ScoreEntry({
       </div>
 
       {hole ? (
-        <div className="mt-6 border border-mist bg-white p-6 animate-rise">
+        <div className="mt-6 rounded-3xl border border-mist bg-white p-6 shadow-[0_10px_30px_rgba(20,32,27,0.1)] animate-rise">
           <div className="flex items-end justify-between gap-3">
             <div>
               <p className="text-xs tracking-[0.18em] text-fairway uppercase">
@@ -289,7 +289,7 @@ export function ScoreEntry({
             </div>
           </div>
 
-          <div className="mt-4 grid grid-cols-2 gap-3 border border-mist bg-fog px-3 py-3 text-sm">
+          <div className="mt-4 grid grid-cols-2 gap-3 rounded-2xl border border-mist bg-fog px-4 py-3 text-sm">
             <div>
               <p className="text-xs text-muted">Strokes received</p>
               <p className="font-semibold text-ink">
@@ -307,7 +307,7 @@ export function ScoreEntry({
           </div>
 
           {format === "best_ball" ? (
-            <div className="mt-3 border border-pine/30 bg-pine/5 px-3 py-3 text-sm">
+            <div className="mt-3 rounded-2xl border border-pine/30 bg-pine/5 px-4 py-3 text-sm">
               <p className="text-xs tracking-wide text-fairway uppercase">
                 Best ball (net)
               </p>
@@ -350,7 +350,7 @@ export function ScoreEntry({
               type="button"
               onClick={() => bump(-1)}
               disabled={saving}
-              className="border border-mist py-4 text-2xl text-ink hover:bg-fog disabled:opacity-50"
+              className="rounded-xl border border-mist py-4 text-2xl text-ink shadow-sm transition hover:bg-fog active:scale-[0.97] disabled:opacity-50"
             >
               −
             </button>
@@ -358,7 +358,7 @@ export function ScoreEntry({
               type="button"
               onClick={() => void saveStrokes(hole.par)}
               disabled={saving}
-              className="border border-pine bg-pine py-4 text-sm font-semibold tracking-wide text-fog hover:brightness-110 disabled:opacity-50"
+              className="rounded-xl border border-pine bg-pine py-4 text-sm font-semibold tracking-wide text-fog shadow-[0_2px_8px_rgba(12,31,24,0.3)] transition hover:brightness-110 active:scale-[0.97] disabled:opacity-50"
             >
               Set par
             </button>
@@ -366,7 +366,7 @@ export function ScoreEntry({
               type="button"
               onClick={() => bump(1)}
               disabled={saving}
-              className="border border-mist py-4 text-2xl text-ink hover:bg-fog disabled:opacity-50"
+              className="rounded-xl border border-mist py-4 text-2xl text-ink shadow-sm transition hover:bg-fog active:scale-[0.97] disabled:opacity-50"
             >
               +
             </button>
@@ -377,7 +377,7 @@ export function ScoreEntry({
               type="button"
               disabled={activeIndex <= 0}
               onClick={() => goRelative(-1)}
-              className="border border-mist py-3 text-sm text-ink disabled:opacity-40"
+              className="rounded-xl border border-mist py-3 text-sm text-ink transition hover:bg-fog disabled:opacity-40"
             >
               Prev hole
             </button>
@@ -385,7 +385,7 @@ export function ScoreEntry({
               type="button"
               disabled={activeIndex >= roundHoles.length - 1}
               onClick={() => goRelative(1)}
-              className="border border-mist py-3 text-sm text-ink disabled:opacity-40"
+              className="rounded-xl border border-mist py-3 text-sm text-ink transition hover:bg-fog disabled:opacity-40"
             >
               Next hole
             </button>

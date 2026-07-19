@@ -196,7 +196,7 @@ export function TeamsTab({
               <button
                 type="button"
                 onClick={() => setEditing(true)}
-                className="border border-pine bg-pine px-3 py-2 text-sm font-semibold text-fog"
+                className="rounded-full border border-pine bg-pine px-4 py-2 text-sm font-semibold text-fog shadow-[0_2px_8px_rgba(12,31,24,0.3)] transition hover:brightness-110"
               >
                 Edit draft
               </button>
@@ -206,7 +206,7 @@ export function TeamsTab({
                   setEditingNames((v) => !v);
                   setEditingHandicaps(false);
                 }}
-                className="border border-mist bg-white px-3 py-2 text-sm font-semibold text-ink"
+                className="rounded-full border border-mist bg-white px-4 py-2 text-sm font-semibold text-ink transition hover:border-fairway/40"
               >
                 {editingNames ? "Close names" : "Rename teams"}
               </button>
@@ -216,7 +216,7 @@ export function TeamsTab({
                   setEditingHandicaps((v) => !v);
                   setEditingNames(false);
                 }}
-                className="border border-mist bg-white px-3 py-2 text-sm font-semibold text-ink"
+                className="rounded-full border border-mist bg-white px-4 py-2 text-sm font-semibold text-ink transition hover:border-fairway/40"
               >
                 {editingHandicaps ? "Close handicaps" : "Set handicaps"}
               </button>
@@ -226,7 +226,7 @@ export function TeamsTab({
       </div>
 
       {isAdmin && editingNames ? (
-        <div className="mt-6 border border-mist bg-white p-4 animate-fade">
+        <div className="mt-6 rounded-2xl border border-mist bg-white p-4 shadow-[0_6px_20px_rgba(20,32,27,0.07)] animate-fade">
           <h2 className="text-sm font-semibold tracking-wide text-fairway uppercase">
             Team names
           </h2>
@@ -245,7 +245,7 @@ export function TeamsTab({
                       [team.id]: e.target.value,
                     }))
                   }
-                  className="w-full border border-mist px-3 py-2 text-sm text-ink outline-none focus:border-fairway"
+                  className="w-full rounded-xl border border-mist px-3 py-2 text-sm text-ink outline-none focus:border-fairway"
                   placeholder="Team name"
                   aria-label={`Name for ${team.name}`}
                 />
@@ -256,7 +256,7 @@ export function TeamsTab({
             type="button"
             disabled={savingNames}
             onClick={() => void saveTeamNames()}
-            className="mt-4 w-full bg-pine px-4 py-3 text-sm font-semibold text-fog disabled:opacity-50"
+            className="mt-4 w-full rounded-2xl bg-pine px-4 py-3 text-sm font-semibold text-fog shadow-[0_4px_14px_rgba(12,31,24,0.3)] transition hover:brightness-110 disabled:opacity-50"
           >
             {savingNames ? "Saving…" : "Save team names"}
           </button>
@@ -264,7 +264,7 @@ export function TeamsTab({
       ) : null}
 
       {isAdmin && editingHandicaps ? (
-        <div className="mt-6 border border-mist bg-white p-4 animate-fade">
+        <div className="mt-6 rounded-2xl border border-mist bg-white p-4 shadow-[0_6px_20px_rgba(20,32,27,0.07)] animate-fade">
           <h2 className="text-sm font-semibold tracking-wide text-fairway uppercase">
             Course handicaps
           </h2>
@@ -288,7 +288,7 @@ export function TeamsTab({
                       [player.id]: e.target.value,
                     }))
                   }
-                  className="w-20 border border-mist px-2 py-1.5 text-right text-sm tabular-nums outline-none focus:border-fairway"
+                  className="w-20 rounded-xl border border-mist px-2.5 py-1.5 text-right text-sm tabular-nums outline-none focus:border-fairway"
                   placeholder="—"
                   aria-label={`Handicap for ${player.display_name}`}
                 />
@@ -299,7 +299,7 @@ export function TeamsTab({
             type="button"
             disabled={savingHcps}
             onClick={() => void saveHandicaps()}
-            className="mt-4 w-full bg-pine px-4 py-3 text-sm font-semibold text-fog disabled:opacity-50"
+            className="mt-4 w-full rounded-2xl bg-pine px-4 py-3 text-sm font-semibold text-fog shadow-[0_4px_14px_rgba(12,31,24,0.3)] transition hover:brightness-110 disabled:opacity-50"
           >
             {savingHcps ? "Saving…" : "Save handicaps"}
           </button>
@@ -321,7 +321,10 @@ export function TeamsTab({
           );
 
           return (
-            <div key={team.id} className="border border-mist bg-white p-4">
+            <div
+              key={team.id}
+              className="rounded-2xl border border-mist bg-white p-4 shadow-[0_6px_20px_rgba(20,32,27,0.07)]"
+            >
               <div className="flex items-center justify-between gap-2">
                 <div className="flex items-center gap-2">
                   <TeamSwatch color={accent} className="h-3 w-3" />
@@ -356,7 +359,7 @@ export function TeamsTab({
       </div>
 
       {unassigned.length > 0 ? (
-        <div className="mt-4 border border-mist bg-white p-4">
+        <div className="mt-4 rounded-2xl border border-mist bg-white p-4 shadow-[0_4px_14px_rgba(20,32,27,0.06)]">
           <h2 className="text-sm font-semibold text-ink">
             Unassigned ({unassigned.length})
           </h2>

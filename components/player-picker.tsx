@@ -27,7 +27,7 @@ export function PlayerPicker({ players, onSelect }: PlayerPickerProps) {
             <button
               type="button"
               onClick={() => onSelect(player)}
-              className="w-full border border-mist bg-white px-4 py-3.5 text-left text-base text-ink transition hover:border-fairway hover:bg-fog"
+              className="w-full rounded-2xl border border-mist bg-white px-5 py-3.5 text-left text-base text-ink shadow-[0_4px_14px_rgba(20,32,27,0.06)] transition hover:border-fairway hover:bg-fog hover:shadow-[0_6px_18px_rgba(20,32,27,0.1)]"
             >
               {player.display_name}
             </button>
