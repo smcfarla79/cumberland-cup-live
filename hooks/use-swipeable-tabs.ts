@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { APP_TAB_ORDER } from "@/lib/app-tabs";
 import type { AppTab } from "@/lib/types";
 
@@ -24,7 +24,14 @@ type Gesture = { startX: number; startY: number; lockedDir: LockedDir };
  * itself as non-horizontal.
  */
 export function useSwipeableTabs(active: AppTab, onChange: (tab: AppTab) => void) {
-  const containerRef = useRef<HTMLDivElement | null>(null);
+  // A plain ref's assignment doesn't trigger effects, and the swipeable
+  // container isn't mounted until the app gate opens — so we track the node
+  // in state via a callback ref, letting the listener effect below re-run
+  // once the element actually exists.
+  const [node, setNode] = useState<HTMLDivElement | null>(null);
+  const containerRef = useCallback((el: HTMLDivElement | null) => {
+    setNode(el);
+  }, []);
   const [offset, setOffset] = useState(0);
   const [transitionOn, setTransitionOn] = useState(false);
 
@@ -36,16 +43,17 @@ export function useSwipeableTabs(active: AppTab, onChange: (tab: AppTab) => void
   onChangeRef.current = onChange;
 
   useEffect(() => {
-    function measure() {
-      widthRef.current = containerRef.current?.clientWidth || window.innerWidth;
-    }
+    if (!node) return;
+    const measure = () => {
+      widthRef.current = node.clientWidth || window.innerWidth;
+    };
     measure();
     window.addEventListener("resize", measure);
     return () => window.removeEventListener("resize", measure);
-  }, []);
+  }, [node]);
 
   useEffect(() => {
-    const el = containerRef.current;
+    const el = node;
     if (!el) return;
 
     let gesture: Gesture | null = null;
@@ -152,7 +160,7 @@ export function useSwipeableTabs(active: AppTab, onChange: (tab: AppTab) => void
       el.removeEventListener("touchend", finishGesture);
       el.removeEventListener("touchcancel", onTouchCancel);
     };
-  }, []);
+  }, [node]);
 
   return {
     containerRef,
