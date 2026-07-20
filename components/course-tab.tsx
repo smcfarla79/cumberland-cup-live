@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   SEWANEE_ABOUT,
   SEWANEE_COURSE_PAGE,
@@ -14,6 +14,8 @@ type CourseTabProps = {
 };
 
 type YardKey = "yards" | "yards_purple";
+
+const VIDEO_LOAD_TIMEOUT_MS = 7000;
 
 function cellValue(
   hole: Hole | undefined,
@@ -45,6 +47,12 @@ function holeStatsLine(hole: Hole | undefined) {
   }`;
 }
 
+function browserCanPlayType(type: string) {
+  if (typeof document === "undefined") return true;
+  const video = document.createElement("video");
+  return Boolean(video.canPlayType(type));
+}
+
 export function CourseTab({ courseName, holes }: CourseTabProps) {
   const ordered = useMemo(
     () => [...holes].sort((a, b) => a.hole_number - b.hole_number),
@@ -62,6 +70,7 @@ export function CourseTab({ courseName, holes }: CourseTabProps) {
   const [openFlyover, setOpenFlyover] = useState<number | null>(null);
   const [videoLoading, setVideoLoading] = useState(false);
   const [videoError, setVideoError] = useState(false);
+  const loadTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const frontPar = sumPar(front);
   const backPar = sumPar(back);
@@ -69,6 +78,57 @@ export function CourseTab({ courseName, holes }: CourseTabProps) {
   const backWhite = sumYards(back, "yards");
   const frontPurple = sumYards(front, "yards_purple");
   const backPurple = sumYards(back, "yards_purple");
+
+  const activeFlyover = useMemo(
+    () => SEWANEE_FLYOVERS.find((f) => f.frontHole === openFlyover) ?? null,
+    [openFlyover],
+  );
+
+  function clearLoadTimeout() {
+    if (loadTimeoutRef.current != null) {
+      clearTimeout(loadTimeoutRef.current);
+      loadTimeoutRef.current = null;
+    }
+  }
+
+  function markVideoReady() {
+    clearLoadTimeout();
+    setVideoLoading(false);
+  }
+
+  function markVideoFailed() {
+    clearLoadTimeout();
+    setVideoLoading(false);
+    setVideoError(true);
+  }
+
+  function openHoleFlyover(frontHole: number) {
+    clearLoadTimeout();
+    setOpenFlyover(frontHole);
+    setVideoError(false);
+
+    const flyover = SEWANEE_FLYOVERS.find((f) => f.frontHole === frontHole);
+    if (!flyover || !browserCanPlayType(flyover.type)) {
+      setVideoLoading(false);
+      setVideoError(true);
+      return;
+    }
+
+    setVideoLoading(true);
+    loadTimeoutRef.current = setTimeout(() => {
+      setVideoLoading(false);
+      setVideoError(true);
+    }, VIDEO_LOAD_TIMEOUT_MS);
+  }
+
+  function closeFlyover() {
+    clearLoadTimeout();
+    setOpenFlyover(null);
+    setVideoLoading(false);
+    setVideoError(false);
+  }
+
+  useEffect(() => () => clearLoadTimeout(), []);
 
   const holeHeaders = [
     ...Array.from({ length: 9 }, (_, i) => i + 1),
@@ -273,11 +333,10 @@ export function CourseTab({ courseName, holes }: CourseTabProps) {
                   type="button"
                   aria-expanded={isOpen}
                   onClick={() => {
-                    const next = isOpen ? null : flyover.frontHole;
-                    setOpenFlyover(next);
-                    if (next != null) {
-                      setVideoLoading(true);
-                      setVideoError(false);
+                    if (isOpen) {
+                      closeFlyover();
+                    } else {
+                      openHoleFlyover(flyover.frontHole);
                     }
                   }}
                   className="flex w-full items-center justify-between gap-3 px-4 py-3.5 text-left hover:bg-fog/60"
@@ -307,7 +366,7 @@ export function CourseTab({ courseName, holes }: CourseTabProps) {
                   <div className="border-t border-mist bg-fog/40 px-3 pb-3 pt-3 sm:px-4">
                     <div className="relative overflow-hidden rounded-xl border border-mist bg-black">
                       {videoLoading ? (
-                        <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-2 bg-black/80 text-fog">
+                        <div className="pointer-events-none absolute inset-0 z-10 flex flex-col items-center justify-center gap-2 bg-black/80 text-fog">
                           <span
                             className="h-6 w-6 animate-spin rounded-full border-2 border-fog/30 border-t-fog"
                             aria-hidden
@@ -316,7 +375,7 @@ export function CourseTab({ courseName, holes }: CourseTabProps) {
                         </div>
                       ) : null}
                       {videoError ? (
-                        <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-1 bg-black/85 px-4 text-center text-fog">
+                        <div className="pointer-events-none absolute inset-0 z-10 flex flex-col items-center justify-center gap-1 bg-black/85 px-4 text-center text-fog">
                           <span className="text-sm font-medium">
                             Video couldn’t load.
                           </span>
@@ -324,23 +383,20 @@ export function CourseTab({ courseName, holes }: CourseTabProps) {
                             href={SEWANEE_COURSE_PAGE}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-xs text-mist underline-offset-2 hover:underline"
+                            className="pointer-events-auto text-xs text-mist underline-offset-2 hover:underline"
                           >
                             View on Sewanee site →
                           </a>
                         </div>
                       ) : null}
                       <video
-                        key={flyover.src}
+                        key={activeFlyover?.src ?? flyover.src}
                         controls
                         playsInline
-                        preload="metadata"
-                        onLoadedData={() => setVideoLoading(false)}
-                        onCanPlay={() => setVideoLoading(false)}
-                        onError={() => {
-                          setVideoLoading(false);
-                          setVideoError(true);
-                        }}
+                        preload="auto"
+                        onLoadedData={markVideoReady}
+                        onCanPlay={markVideoReady}
+                        onError={markVideoFailed}
                         className="aspect-video w-full bg-black"
                       >
                         <source src={flyover.src} type={flyover.type} />
