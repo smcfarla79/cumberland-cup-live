@@ -106,13 +106,17 @@ export function LiveMatchCard({
       ].join(" ")}
     >
       <div className="flex items-center justify-between gap-2 px-3 py-2">
-        <p className="text-[11px] tracking-[0.16em] text-muted uppercase">
+        <p className="text-xs font-medium tracking-[0.1em] text-muted uppercase">
           Match {matchNumber}
-          {includesMe ? " · you" : ""}
+          {includesMe ? (
+            <span className="ml-1 rounded-full bg-pine/10 px-1.5 py-0.5 text-[10px] font-semibold text-pine">
+              You
+            </span>
+          ) : null}
           {" · "}
           {pointsValue} pt
         </p>
-        <p className="text-[11px] tabular-nums text-muted">{thruLabel}</p>
+        <p className="text-xs font-medium tabular-nums text-muted">{thruLabel}</p>
       </div>
 
       <div

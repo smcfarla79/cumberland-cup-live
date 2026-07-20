@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useState, useEffectEvent } from "react";
+import { useEffect, useMemo, useRef, useState, useEffectEvent } from "react";
+import { SavedBadge } from "@/components/saved-badge";
 import { holesForRound } from "@/lib/course-holes";
 import {
   bestBallNet,
@@ -77,6 +78,8 @@ export function MatchScoreboard({
   );
   const [message, setMessage] = useState("");
   const [savingPlayerId, setSavingPlayerId] = useState<string | null>(null);
+  const [savedPlayerId, setSavedPlayerId] = useState<string | null>(null);
+  const savedTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const sessionPlayer = players.find((p) => p.id === sessionPlayerId) ?? null;
 
@@ -107,6 +110,12 @@ export function MatchScoreboard({
   useEffect(() => {
     void loadScores();
   }, [round.id, match.id]);
+
+  useEffect(() => {
+    return () => {
+      if (savedTimer.current) clearTimeout(savedTimer.current);
+    };
+  }, []);
 
   const hole =
     roundHoles.find((h) => h.hole_number === activeHole) ?? roundHoles[0];
@@ -168,7 +177,12 @@ export function MatchScoreboard({
     if (error) {
       setMessage(error.message);
       await loadScores();
+      return;
     }
+
+    setSavedPlayerId(playerId);
+    if (savedTimer.current) clearTimeout(savedTimer.current);
+    savedTimer.current = setTimeout(() => setSavedPlayerId(null), 1400);
   }
 
   function bump(playerId: string, delta: number) {
@@ -249,7 +263,7 @@ export function MatchScoreboard({
                       {isYou ? " · you" : ""}
                       {player?.handicap != null ? ` · HCP ${player.handicap}` : ""}
                     </p>
-                    <p className="mt-1 text-xs text-muted">
+                    <p className="mt-1 text-sm text-muted">
                       {strokesGot > 0
                         ? `Stroke hole (−${strokesGot})`
                         : "No stroke"}
@@ -259,9 +273,12 @@ export function MatchScoreboard({
                       {!editable ? " · view only" : ""}
                     </p>
                   </div>
-                  <p className="font-display text-3xl tabular-nums text-ink">
-                    {gross ?? "—"}
-                  </p>
+                  <div className="flex flex-col items-end gap-1">
+                    <p className="font-display text-3xl tabular-nums text-ink">
+                      {gross ?? "—"}
+                    </p>
+                    {savedPlayerId === mp.player_id ? <SavedBadge /> : null}
+                  </div>
                 </div>
 
                 {editable ? (
@@ -270,7 +287,7 @@ export function MatchScoreboard({
                       type="button"
                       disabled={saving}
                       onClick={() => bump(mp.player_id, -1)}
-                      className="rounded-xl border border-mist bg-white py-3 text-xl text-ink shadow-sm transition hover:border-fairway/40 active:scale-[0.97] disabled:opacity-50"
+                      className="rounded-xl border border-mist bg-white py-4 text-2xl text-ink shadow-sm transition hover:border-fairway/40 active:scale-[0.97] disabled:opacity-50"
                     >
                       −
                     </button>
@@ -278,7 +295,7 @@ export function MatchScoreboard({
                       type="button"
                       disabled={saving}
                       onClick={() => void saveStrokes(mp.player_id, hole.par)}
-                      className="rounded-xl border border-pine bg-pine py-3 text-xs font-semibold text-fog shadow-[0_2px_8px_rgba(12,31,24,0.3)] transition hover:brightness-110 active:scale-[0.97] disabled:opacity-50"
+                      className="rounded-xl border border-pine bg-pine py-4 text-sm font-semibold text-fog shadow-[0_2px_8px_rgba(12,31,24,0.3)] transition hover:brightness-110 active:scale-[0.97] disabled:opacity-50"
                     >
                       Par
                     </button>
@@ -286,7 +303,7 @@ export function MatchScoreboard({
                       type="button"
                       disabled={saving}
                       onClick={() => bump(mp.player_id, 1)}
-                      className="rounded-xl border border-mist bg-white py-3 text-xl text-ink shadow-sm transition hover:border-fairway/40 active:scale-[0.97] disabled:opacity-50"
+                      className="rounded-xl border border-mist bg-white py-4 text-2xl text-ink shadow-sm transition hover:border-fairway/40 active:scale-[0.97] disabled:opacity-50"
                     >
                       +
                     </button>
@@ -325,7 +342,10 @@ export function MatchScoreboard({
             : " — you can edit your row and your partner’s"}
       </p>
 
-      <div className="mt-5 flex gap-2 overflow-x-auto pb-2" data-swipe-ignore>
+      <div
+        className="scroll-fade-x mt-5 flex gap-2 overflow-x-auto pb-2"
+        data-swipe-ignore
+      >
         {roundHoles.map((h) => {
           const isActive = h.hole_number === activeHole;
           return (
@@ -334,7 +354,7 @@ export function MatchScoreboard({
               type="button"
               onClick={() => setActiveHole(h.hole_number)}
               className={[
-                "flex h-10 w-10 shrink-0 items-center justify-center rounded-full border text-xs tabular-nums transition-all duration-150",
+                "flex h-11 w-11 shrink-0 items-center justify-center rounded-full border text-sm font-medium tabular-nums transition-all duration-150",
                 isActive
                   ? "border-pine bg-pine text-fog shadow-[0_2px_8px_rgba(12,31,24,0.35)]"
                   : "border-mist bg-white text-ink hover:border-fairway/40",
@@ -379,10 +399,10 @@ export function MatchScoreboard({
       {message ? <p className="mt-3 text-sm text-danger">{message}</p> : null}
 
       <div
-        className="mt-6 overflow-x-auto rounded-2xl border border-mist bg-white shadow-[0_6px_20px_rgba(20,32,27,0.07)]"
+        className="scroll-fade-x mt-6 overflow-x-auto rounded-2xl border border-mist bg-white shadow-[0_6px_20px_rgba(20,32,27,0.07)]"
         data-swipe-ignore
       >
-        <table className="w-full min-w-[520px] border-collapse text-xs">
+        <table className="w-full min-w-[520px] border-collapse text-sm">
           <thead>
             <tr className="border-b border-mist bg-fog text-muted">
               <th className="px-2 py-2 text-left font-medium">Player</th>

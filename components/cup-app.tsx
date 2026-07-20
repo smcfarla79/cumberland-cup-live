@@ -315,10 +315,21 @@ export function CupApp() {
       />
       <div ref={swipeRef} style={{ touchAction: "pan-y" }} className="overflow-x-hidden">
         <div style={swipeStyle}>
-          {tab === "home" ? <HomeTab /> : null}
+          {tab === "home" ? (
+            <HomeTab
+              rounds={rounds}
+              holes={holes}
+              teams={teams}
+              players={players}
+              sessionPlayerId={session.playerId}
+              onGoToPlay={(roundId) => {
+                setPlayRoundId(roundId);
+                setTab("play");
+              }}
+            />
+          ) : null}
           {tab === "cup" ? (
             <CupTab
-              tournamentId={tournament.id}
               teams={teams}
               rounds={rounds}
               players={players}

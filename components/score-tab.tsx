@@ -354,14 +354,17 @@ export function ScoreTab({
                 setSelectedRound(null);
                 setPickingSession(true);
               }}
-              className="shrink-0 text-xs text-muted underline-offset-2 hover:text-ink hover:underline"
+              className="shrink-0 rounded-full border border-mist bg-white px-3 py-1.5 text-xs font-medium text-muted transition hover:border-fairway/40 hover:text-ink"
             >
               All sessions
             </button>
           </div>
         </div>
 
-        <div className="mt-4 flex gap-2 overflow-x-auto pb-1 animate-fade" data-swipe-ignore>
+        <div
+          className="scroll-fade-x mt-4 flex gap-2 overflow-x-auto pb-1 animate-fade"
+          data-swipe-ignore
+        >
           {competitionRounds.map((round) => {
             const active = round.id === selectedRound.id;
             return (
@@ -373,10 +376,10 @@ export function ScoreTab({
                   setSelectedMatchId(null);
                 }}
                 className={[
-                  "shrink-0 rounded-full px-3.5 py-2 text-sm font-medium transition-all duration-200",
+                  "shrink-0 rounded-full px-4 py-2.5 text-sm font-medium whitespace-nowrap transition-all duration-200",
                   active
                     ? "bg-pine text-fog shadow-[0_2px_8px_rgba(12,31,24,0.35)]"
-                    : "border border-mist bg-white text-muted hover:border-fairway/40 hover:text-ink",
+                    : "border border-mist bg-white text-ink hover:border-fairway/40",
                 ].join(" ")}
               >
                 {shortSessionLabel(round)}
@@ -393,14 +396,14 @@ export function ScoreTab({
                   setSelectedMatchId(null);
                 }
               }}
-              className="shrink-0 rounded-full border border-mist bg-white px-3.5 py-2 text-sm font-medium text-muted transition hover:border-fairway/40 hover:text-ink"
+              className="shrink-0 rounded-full border border-mist bg-white px-4 py-2.5 text-sm font-medium whitespace-nowrap text-ink transition hover:border-fairway/40"
             >
               Seeding
             </button>
           ) : null}
         </div>
 
-        <p className="mt-3 text-xs text-muted">
+        <p className="mt-3 text-sm text-muted">
           {formatLabel(resolvePlayFormat(selectedRound))} ·{" "}
           {selectedRound.name.replace(/^.*?—\s*/, "")}
         </p>
@@ -482,10 +485,11 @@ export function ScoreTab({
           <button
             type="button"
             onClick={() => void loadLiveBoard(selectedRound)}
-            className="underline-offset-2 hover:text-ink hover:underline"
+            className="flex items-center gap-1.5 rounded-full border border-mist bg-white px-2.5 py-1 font-medium transition hover:border-fairway/40 hover:text-ink"
           >
+            <span className="live-dot h-1.5 w-1.5 rounded-full bg-fairway" aria-hidden />
             {updatedAt
-              ? `Updated ${updatedAt.toLocaleTimeString([], {
+              ? `Live · ${updatedAt.toLocaleTimeString([], {
                   hour: "numeric",
                   minute: "2-digit",
                   second: "2-digit",

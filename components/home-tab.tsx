@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { BrandLogo } from "@/components/brand-logo";
 import {
   fetchSewaneeWeather,
@@ -10,6 +10,10 @@ import {
   type WeatherSnapshot,
 } from "@/lib/sewanee-weather";
 import { WeatherBackdrop } from "@/components/weather-backdrop";
+import { useLiveMatches } from "@/hooks/use-live-matches";
+import { calculateMatchPlayStanding } from "@/lib/match-play";
+import { compactMatchStatus } from "@/lib/match-status";
+import { teamAccentColor } from "@/lib/team-colors";
 import {
   ATTENDEES,
   COMPETITION,
@@ -23,6 +27,136 @@ import {
   WEEKEND_DATES,
   mapsLinksForAddress,
 } from "@/lib/tournament-overview";
+import type { Hole, Player, Round, Team } from "@/lib/types";
+
+function shortRoundLabel(round: Round) {
+  const name = round.name;
+  if (/friday am/i.test(name)) return "Friday AM · Best Ball";
+  if (/friday pm/i.test(name)) return "Friday PM · Scramble / Shamble";
+  if (/saturday am/i.test(name)) return "Saturday AM · Scramble";
+  if (/1v1|singles|match play/i.test(name)) {
+    return `Singles · ${round.hole_count === 9 ? "9" : "18"} holes`;
+  }
+  if (/seeding/i.test(name)) return "Seeding";
+  return name;
+}
+
+function shortPlayerName(name: string) {
+  const parts = name.trim().split(/\s+/);
+  if (parts.length === 1) return parts[0];
+  return `${parts[0][0]}. ${parts[parts.length - 1]}`;
+}
+
+type YourMatchProps = {
+  rounds: Round[];
+  holes: Hole[];
+  teams: Team[];
+  players: Player[];
+  sessionPlayerId: string;
+  onGoToPlay: (roundId: string) => void;
+};
+
+/** Quick jump straight into the signed-in player's current live match. */
+function YourMatchCard({
+  rounds,
+  holes,
+  teams,
+  players,
+  sessionPlayerId,
+  onGoToPlay,
+}: YourMatchProps) {
+  const roundIds = useMemo(() => rounds.map((r) => r.id), [rounds]);
+  const { matches, scoresByRound } = useLiveMatches(roundIds);
+  const sortedTeams = useMemo(
+    () => [...teams].sort((a, b) => a.name.localeCompare(b.name)),
+    [teams],
+  );
+  const [teamA, teamB] = sortedTeams;
+
+  const nowPlaying = useMemo(() => {
+    if (!sessionPlayerId) return null;
+    const mine = matches
+      .filter(
+        (m) =>
+          m.status === "pending" &&
+          m.players.some((p) => p.player_id === sessionPlayerId),
+      )
+      .sort((a, b) => a.match_number - b.match_number);
+    const match = mine[0];
+    if (!match) return null;
+    const round = rounds.find((r) => r.id === match.round_id) ?? null;
+    if (!round || !teamA || !teamB) return null;
+    const standing = calculateMatchPlayStanding({
+      round,
+      holes,
+      sideA: match.players.filter((p) => p.team_id === teamA.id),
+      sideB: match.players.filter((p) => p.team_id === teamB.id),
+      sideSize: match.side_size,
+      players,
+      scoresByPlayer: scoresByRound[round.id] ?? {},
+      teamAName: teamA.name,
+      teamBName: teamB.name,
+    });
+    const opponents = match.players
+      .filter((p) => p.player_id !== sessionPlayerId)
+      .map(
+        (p) =>
+          players.find((pl) => pl.id === p.player_id)?.display_name ??
+          "Unknown",
+      );
+    return { match, round, standing, opponents };
+  }, [matches, sessionPlayerId, rounds, holes, players, scoresByRound, teamA, teamB]);
+
+  if (!nowPlaying) return null;
+
+  const { round, match, standing, opponents } = nowPlaying;
+  const started = standing.holesPlayed > 0;
+  const status = started
+    ? compactMatchStatus({
+        lead: standing.lead,
+        holesPlayed: standing.holesPlayed,
+        holesRemaining: standing.holesRemaining,
+        finalResult: standing.finalResult,
+        closedEarly: Boolean(standing.finalResult && !standing.complete),
+      })
+    : null;
+  const aUp = standing.lead > 0;
+  const bUp = standing.lead < 0;
+  const leadColor = aUp
+    ? teamAccentColor(teamA?.color, "gold")
+    : bUp
+      ? teamAccentColor(teamB?.color, "green")
+      : undefined;
+
+  return (
+    <button
+      type="button"
+      onClick={() => onGoToPlay(round.id)}
+      className="mt-4 w-full animate-rise rounded-3xl border border-pine/25 bg-white px-5 py-4 text-left shadow-[0_10px_30px_rgba(20,32,27,0.1)] transition hover:border-pine/50 hover:shadow-[0_12px_34px_rgba(20,32,27,0.14)]"
+    >
+      <div className="flex items-center justify-between gap-3">
+        <p className="text-xs font-semibold tracking-[0.16em] text-fairway uppercase">
+          Your match is on
+        </p>
+        <span className="shrink-0 rounded-full bg-pine px-3 py-1 text-xs font-semibold text-fog">
+          Score it →
+        </span>
+      </div>
+      <p className="mt-2 text-base font-semibold text-ink">
+        {shortRoundLabel(round)} · Match {match.match_number}
+      </p>
+      <p className="mt-1 text-sm text-muted">
+        vs {opponents.map(shortPlayerName).join(" & ") || "TBD"}
+      </p>
+      <p
+        className="mt-2 text-sm font-semibold"
+        style={{ color: started ? leadColor ?? "#14201b" : undefined }}
+      >
+        {started ? `${status} · thru ${standing.holesPlayed}` : "Not started yet"}
+      </p>
+    </button>
+  );
+}
 
 function MapLinks({ address }: { address: string }) {
   const { apple, google } = mapsLinksForAddress(address);
@@ -65,7 +199,23 @@ function Section({
   );
 }
 
-export function HomeTab() {
+type HomeTabProps = {
+  rounds: Round[];
+  holes: Hole[];
+  teams: Team[];
+  players: Player[];
+  sessionPlayerId: string;
+  onGoToPlay: (roundId: string) => void;
+};
+
+export function HomeTab({
+  rounds,
+  holes,
+  teams,
+  players,
+  sessionPlayerId,
+  onGoToPlay,
+}: HomeTabProps) {
   const [weather, setWeather] = useState<WeatherSnapshot | null>(null);
   const [weatherError, setWeatherError] = useState("");
 
@@ -99,7 +249,7 @@ export function HomeTab() {
             className="shrink-0 shadow-[0_6px_20px_rgba(0,0,0,0.3)] ring-2 ring-white/40"
           />
           <div className="min-w-0">
-            <p className="text-[10px] tracking-[0.22em] text-mist/80 uppercase">
+            <p className="text-xs tracking-[0.22em] text-mist/90 uppercase">
               Welcome
             </p>
             <h1 className="font-display mt-1 text-3xl leading-tight sm:text-4xl">
@@ -117,6 +267,15 @@ export function HomeTab() {
         </div>
       </div>
 
+      <YourMatchCard
+        rounds={rounds}
+        holes={holes}
+        teams={teams}
+        players={players}
+        sessionPlayerId={sessionPlayerId}
+        onGoToPlay={onGoToPlay}
+      />
+
       {/* Live weather */}
       <section
         className="relative mt-5 overflow-hidden rounded-3xl border border-ink/10 px-5 py-5 animate-fade shadow-[0_10px_30px_rgba(20,32,27,0.12)]"
@@ -132,7 +291,7 @@ export function HomeTab() {
               Local weather
             </h2>
             <p
-              className="text-[11px] font-semibold tracking-wide"
+              className="text-xs font-semibold tracking-wide"
               style={{ color: theme?.body ?? theme?.muted }}
             >
               {SEWANEE_COORDS.label}
@@ -177,24 +336,24 @@ export function HomeTab() {
                     }}
                   >
                     <p
-                      className="text-[10px] tracking-wide uppercase"
+                      className="text-xs font-medium tracking-wide uppercase"
                       style={{ color: theme.muted }}
                     >
                       {formatForecastDay(day.date)}
                     </p>
                     <p
-                      className="mt-1 text-sm font-medium"
+                      className="mt-1 text-sm font-semibold"
                       style={{ color: theme.body }}
                     >
                       {day.high}° / {day.low}°
                     </p>
                     <p
-                      className="mt-0.5 truncate text-[11px]"
+                      className="mt-0.5 truncate text-xs"
                       style={{ color: theme.muted }}
                     >
                       {day.label}
                     </p>
-                    <p className="mt-0.5 text-[10px]" style={{ color: theme.muted }}>
+                    <p className="mt-0.5 text-xs" style={{ color: theme.muted }}>
                       {day.precipChance}% rain
                     </p>
                   </div>
@@ -297,7 +456,7 @@ export function HomeTab() {
         </div>
       </Section>
 
-      <p className="mt-8 mb-2 text-center text-[11px] text-muted">
+      <p className="mt-8 mb-2 text-center text-xs text-muted">
         From the 2026 Cumberland Cup Source of Truth
       </p>
     </div>

@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState, useEffectEvent } from "react";
 import { BrandLogo } from "@/components/brand-logo";
 import { TeamSwatch } from "@/components/team-swatch";
+import { useLiveMatches, type MatchWithPlayers } from "@/hooks/use-live-matches";
 import { calculateMatchPlayStanding } from "@/lib/match-play";
 import { compactMatchStatus } from "@/lib/match-status";
 import { createClient } from "@/lib/supabase/client";
@@ -10,12 +11,18 @@ import {
   teamAccentColor,
   teamWashColor,
 } from "@/lib/team-colors";
-import type { Hole, Match, MatchPlayer, Player, Round, Team } from "@/lib/types";
+import type {
+  Hole,
+  MatchPlayer,
+  Player,
+  Round,
+  Team,
+  TeamAssignment,
+} from "@/lib/types";
 
 const CUP_TARGET = 18;
 
 type CupTabProps = {
-  tournamentId: string;
   teams: Team[];
   rounds: Round[];
   players: Player[];
@@ -23,8 +30,6 @@ type CupTabProps = {
   sessionPlayerId?: string;
   onGoToPlay?: (roundId: string) => void;
 };
-
-type MatchWithPlayers = Match & { players: MatchPlayer[] };
 
 function formatPoints(value: number) {
   if (Number.isInteger(value)) return value.toFixed(0);
@@ -73,7 +78,6 @@ function sideBoardNames(side: MatchPlayer[], allPlayers: Player[]) {
 }
 
 export function CupTab({
-  tournamentId,
   teams,
   rounds,
   players,
@@ -81,13 +85,6 @@ export function CupTab({
   sessionPlayerId,
   onGoToPlay,
 }: CupTabProps) {
-  const [matches, setMatches] = useState<MatchWithPlayers[]>([]);
-  const [scoresByRound, setScoresByRound] = useState<
-    Record<string, Record<string, Record<number, number>>>
-  >({});
-  const [message, setMessage] = useState("");
-  const [updatedAt, setUpdatedAt] = useState<Date | null>(null);
-
   const sortedTeams = useMemo(
     () => [...teams].sort((a, b) => a.name.localeCompare(b.name)),
     [teams],
@@ -108,85 +105,30 @@ export function CupTab({
     [rounds],
   );
 
-  const refresh = useEffectEvent(async () => {
-    if (roundIds.length === 0) return;
-    const supabase = createClient();
-    const { data, error } = await supabase
-      .from("matches")
-      .select(
-        "id, round_id, match_number, side_size, points_value, status, winning_team_id, is_halved",
-      )
-      .in("round_id", roundIds)
-      .order("match_number");
+  const { matches, scoresByRound, updatedAt, message, refresh } =
+    useLiveMatches(roundIds);
 
-    if (error) {
-      setMessage(
-        error.message.includes("does not exist")
-          ? "Matches tables are missing. Run supabase/schema-matches.sql in the Supabase SQL Editor."
-          : error.message,
-      );
+  const [myTeamId, setMyTeamId] = useState<string | null>(null);
+
+  const loadMyTeam = useEffectEvent(async () => {
+    if (!sessionPlayerId || !teamA || !teamB) {
+      setMyTeamId(null);
       return;
     }
-
-    const baseMatches = ((data as Match[]) ?? []).map((m) => ({
-      ...m,
-      points_value: Number(m.points_value),
-      side_size: m.side_size as 1 | 2,
-    }));
-
-    let matchPlayers: MatchPlayer[] = [];
-    if (baseMatches.length > 0) {
-      const { data: mpRows, error: mpError } = await supabase
-        .from("match_players")
-        .select("match_id, player_id, team_id")
-        .in(
-          "match_id",
-          baseMatches.map((m) => m.id),
-        );
-      if (mpError) {
-        setMessage(mpError.message);
-        return;
-      }
-      matchPlayers = (mpRows as MatchPlayer[]) ?? [];
-    }
-
-    const withPlayers = baseMatches.map((m) => ({
-      ...m,
-      players: matchPlayers.filter((p) => p.match_id === m.id),
-    }));
-
-    const playerIds = [...new Set(matchPlayers.map((p) => p.player_id))];
-    const byRound: Record<string, Record<string, Record<number, number>>> = {};
-
-    if (playerIds.length > 0) {
-      const { data: scoreRows } = await supabase
-        .from("hole_scores")
-        .select("player_id, hole_number, strokes, round_id")
-        .in("round_id", roundIds)
-        .in("player_id", playerIds);
-
-      (scoreRows ?? []).forEach((row) => {
-        const rid = row.round_id as string;
-        const pid = row.player_id as string;
-        if (!byRound[rid]) byRound[rid] = {};
-        if (!byRound[rid][pid]) byRound[rid][pid] = {};
-        byRound[rid][pid][row.hole_number as number] = row.strokes as number;
-      });
-    }
-
-    setMatches(withPlayers);
-    setScoresByRound(byRound);
-    setUpdatedAt(new Date());
-    setMessage("");
+    const supabase = createClient();
+    const { data } = await supabase
+      .from("team_players")
+      .select("team_id, player_id")
+      .in("team_id", [teamA.id, teamB.id]);
+    const mine = ((data as TeamAssignment[]) ?? []).find(
+      (a) => a.player_id === sessionPlayerId,
+    );
+    setMyTeamId(mine?.team_id ?? null);
   });
 
   useEffect(() => {
-    void refresh();
-    const id = window.setInterval(() => {
-      void refresh();
-    }, 8000);
-    return () => window.clearInterval(id);
-  }, [tournamentId, roundIds.join(",")]);
+    void loadMyTeam();
+  }, [sessionPlayerId, teamA?.id, teamB?.id]);
 
   function pointsFor(teamId: string, roundId?: string) {
     let total = 0;
@@ -267,9 +209,14 @@ export function CupTab({
           <div className="min-w-0 flex-1 text-left">
             <div className="mb-1 flex items-center gap-1.5">
               <TeamSwatch color={colorA} className="h-2.5 w-2.5" />
-              <p className="truncate text-[10px] tracking-[0.14em] text-mist/85 uppercase">
+              <p className="truncate text-xs tracking-[0.14em] text-mist/90 uppercase">
                 {teamA.name}
               </p>
+              {myTeamId === teamA.id ? (
+                <span className="shrink-0 rounded-full bg-white/20 px-1.5 py-0.5 text-[9px] font-semibold tracking-wide text-fog uppercase">
+                  You
+                </span>
+              ) : null}
             </div>
             <p className="font-display text-4xl leading-none tabular-nums sm:text-6xl">
               {formatPoints(pointsA)}
@@ -289,7 +236,12 @@ export function CupTab({
 
           <div className="min-w-0 flex-1 text-right">
             <div className="mb-1 flex items-center justify-end gap-1.5">
-              <p className="truncate text-[10px] tracking-[0.14em] text-mist/85 uppercase">
+              {myTeamId === teamB.id ? (
+                <span className="shrink-0 rounded-full bg-white/20 px-1.5 py-0.5 text-[9px] font-semibold tracking-wide text-fog uppercase">
+                  You
+                </span>
+              ) : null}
+              <p className="truncate text-xs tracking-[0.14em] text-mist/90 uppercase">
                 {teamB.name}
               </p>
               <TeamSwatch color={colorB} className="h-2.5 w-2.5" />
@@ -348,21 +300,27 @@ export function CupTab({
             <h2 className="text-xs font-semibold tracking-[0.16em] text-fairway uppercase">
               Match board
             </h2>
-            <p className="mt-0.5 text-[11px] text-muted">
+            <p className="mt-0.5 text-xs text-muted">
               Who&apos;s up · who&apos;s down · tap to score
             </p>
           </div>
           <button
             type="button"
             onClick={() => void refresh()}
-            className="shrink-0 rounded-full border border-mist bg-white/70 px-2.5 py-1 text-[11px] font-medium text-muted transition hover:border-fairway/40 hover:text-ink"
+            className="shrink-0 rounded-full border border-mist bg-white px-3 py-1.5 text-xs font-medium text-muted transition hover:border-fairway/40 hover:text-ink"
           >
-            {updatedAt
-              ? updatedAt.toLocaleTimeString([], {
-                  hour: "numeric",
-                  minute: "2-digit",
-                })
-              : "Refresh"}
+            <span className="flex items-center gap-1.5">
+              <span
+                className="live-dot h-1.5 w-1.5 rounded-full bg-fairway"
+                aria-hidden
+              />
+              {updatedAt
+                ? `Live · ${updatedAt.toLocaleTimeString([], {
+                    hour: "numeric",
+                    minute: "2-digit",
+                  })}`
+                : "Refresh"}
+            </span>
           </button>
         </div>
 
@@ -384,7 +342,7 @@ export function CupTab({
                     <p className="truncate text-sm font-semibold text-ink">
                       {shortRoundLabel(round)}
                     </p>
-                    <p className="text-[10px] text-muted">
+                    <p className="text-xs text-muted">
                       {sessionMatches.length === 0
                         ? "No matches yet"
                         : `${done}/${sessionMatches.length} final`}
@@ -471,9 +429,11 @@ export function CupTab({
                           type="button"
                           onClick={() => onGoToPlay?.(round.id)}
                           className={[
-                            "grid w-full grid-cols-[1fr_4.5rem_1fr] items-center gap-1 px-1.5 py-2 text-left transition",
+                            "grid w-full grid-cols-[1fr_4.5rem_1fr] items-center gap-1 py-2.5 text-left transition",
                             index > 0 ? "border-t border-ink/12" : "",
-                            includesMe ? "bg-pine/[0.04]" : "hover:bg-fog/80",
+                            includesMe
+                              ? "border-l-[3px] border-l-pine bg-pine/[0.05] pl-[calc(0.375rem-3px)] pr-1.5"
+                              : "px-1.5 hover:bg-fog/80",
                           ].join(" ")}
                         >
                           {/* Team A */}
@@ -534,9 +494,14 @@ export function CupTab({
                             >
                               {statusDisplay.toUpperCase()}
                             </p>
-                            <p className="mt-0.5 text-[9px] tabular-nums text-muted">
+                            <p className="mt-0.5 text-[10px] font-medium tabular-nums text-muted">
                               {progressLabel}
                             </p>
+                            {includesMe ? (
+                              <p className="mt-0.5 text-[9px] font-semibold tracking-wide text-pine uppercase">
+                                You
+                              </p>
+                            ) : null}
                           </div>
 
                           {/* Team B */}
@@ -586,7 +551,7 @@ export function CupTab({
         </div>
       </div>
 
-      <p className="mt-5 text-center text-[11px] text-muted">
+      <p className="mt-5 text-center text-xs text-muted">
         {completed} completed · {pending} pending · first to {CUP_TARGET}
       </p>
 

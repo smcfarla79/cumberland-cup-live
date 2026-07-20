@@ -9,6 +9,11 @@ import {
 
 const SEWANEE_PURPLE = "#582C83";
 
+function formatPrice(price: number | string) {
+  const num = typeof price === "number" ? price : Number(price);
+  return Number.isFinite(num) && String(price).trim() !== "" ? `$${num}` : price;
+}
+
 function VegetarianBadge() {
   return (
     <span
@@ -102,27 +107,22 @@ export function GrillTab() {
       </div>
 
       <nav
-        className="mt-6 flex gap-2 overflow-x-auto pb-1 animate-fade"
+        className="scroll-fade-x mt-6 flex gap-2 overflow-x-auto pb-1 animate-fade"
         aria-label="Menu sections"
         data-swipe-ignore
       >
-        {[
-          { id: "cocktails", label: "Cocktails" },
-          { id: "breakfast", label: "Breakfast" },
-          { id: "handhelds", label: "Handhelds" },
-          { id: "salad", label: "Salads" },
-        ].map((link) => (
+        {GRILL_MENU.map((section) => (
           <a
-            key={link.id}
-            href={`#grill-${link.id}`}
-            className="shrink-0 rounded-full border px-3.5 py-1.5 text-xs font-semibold tracking-wide uppercase transition hover:opacity-80"
+            key={section.id}
+            href={`#grill-${section.id}`}
+            className="shrink-0 rounded-full border px-4 py-2 text-xs font-semibold tracking-wide whitespace-nowrap uppercase transition hover:opacity-80"
             style={{
               borderColor: `${SEWANEE_PURPLE}44`,
               color: SEWANEE_PURPLE,
               backgroundColor: `${SEWANEE_PURPLE}0a`,
             }}
           >
-            {link.label}
+            {section.title}
           </a>
         ))}
       </nav>
@@ -156,8 +156,8 @@ export function GrillTab() {
                 {section.title}
               </h2>
               {section.priceNote ? (
-                <span className="text-sm font-semibold tabular-nums text-ink">
-                  | {section.priceNote}
+                <span className="shrink-0 text-sm font-semibold tabular-nums whitespace-nowrap text-ink">
+                  {formatPrice(section.priceNote)} each
                 </span>
               ) : null}
             </div>
@@ -165,22 +165,24 @@ export function GrillTab() {
             <ul className="space-y-4">
               {section.items.map((item) => (
                 <li key={item.name}>
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex min-w-0 items-start gap-2">
-                      {item.vegetarian ? <VegetarianBadge /> : null}
-                      <p className="text-sm font-semibold text-ink">
-                        {item.name}
-                      </p>
-                    </div>
+                  <div className="flex items-baseline gap-2">
+                    {item.vegetarian ? <VegetarianBadge /> : null}
+                    <p className="text-sm font-semibold text-ink">
+                      {item.name}
+                    </p>
+                    <span
+                      className="min-w-[0.75rem] flex-1 border-b border-dotted border-ink/25"
+                      aria-hidden
+                    />
                     <p
-                      className="shrink-0 text-sm font-semibold tabular-nums"
+                      className="shrink-0 text-sm font-semibold tabular-nums whitespace-nowrap"
                       style={{ color: SEWANEE_PURPLE }}
                     >
-                      | {item.price}
+                      {formatPrice(item.price)}
                     </p>
                   </div>
                   {item.description ? (
-                    <p className="mt-1 text-xs leading-relaxed text-muted">
+                    <p className="mt-1 text-sm leading-relaxed text-muted">
                       {item.description}
                     </p>
                   ) : null}
@@ -194,10 +196,10 @@ export function GrillTab() {
         ))}
       </div>
 
-      <p className="mt-8 text-[11px] leading-relaxed text-muted">
+      <p className="mt-8 text-xs leading-relaxed text-muted">
         {GRILL_DISCLAIMER}
       </p>
-      <p className="mt-2 text-[11px] text-muted">
+      <p className="mt-2 text-xs text-muted">
         Menu from Green&apos;s View Grill · hours &amp; copy from{" "}
         <a
           href={GRILL_PAGE_URL}

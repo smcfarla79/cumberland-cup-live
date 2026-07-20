@@ -336,7 +336,11 @@ export function TeamsTab({
               </div>
               <ul className="mt-3 space-y-1.5">
                 {members.length === 0 ? (
-                  <li className="text-sm text-muted">No players yet</li>
+                  <li className="rounded-xl border border-dashed border-mist px-3 py-4 text-center text-sm text-muted">
+                    {isAdmin
+                      ? "No players yet — run the draft to assign this side."
+                      : "No players yet"}
+                  </li>
                 ) : (
                   members.map((player) => (
                     <li
@@ -344,7 +348,7 @@ export function TeamsTab({
                       className="flex items-center justify-between gap-2 text-sm"
                     >
                       <span style={{ color: accent }}>{player.display_name}</span>
-                      <span className="text-xs text-muted">
+                      <span className="text-xs font-medium text-muted">
                         {player.handicap == null
                           ? "HCP —"
                           : `HCP ${player.handicap}`}
@@ -359,13 +363,36 @@ export function TeamsTab({
       </div>
 
       {unassigned.length > 0 ? (
-        <div className="mt-4 rounded-2xl border border-mist bg-white p-4 shadow-[0_4px_14px_rgba(20,32,27,0.06)]">
-          <h2 className="text-sm font-semibold text-ink">
-            Unassigned ({unassigned.length})
-          </h2>
-          <p className="mt-1 text-sm text-muted">
-            {unassigned.map((p) => p.display_name).join(", ")}
+        <div className="mt-4 rounded-2xl border border-gold/40 bg-gold/[0.06] p-4 shadow-[0_4px_14px_rgba(20,32,27,0.06)]">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <h2 className="text-sm font-semibold text-ink">
+              Unassigned ({unassigned.length})
+            </h2>
+            {isAdmin ? (
+              <button
+                type="button"
+                onClick={() => setEditing(true)}
+                className="shrink-0 rounded-full border border-pine bg-pine px-3 py-1.5 text-xs font-semibold text-fog shadow-[0_2px_8px_rgba(12,31,24,0.3)] transition hover:brightness-110"
+              >
+                Assign in draft →
+              </button>
+            ) : null}
+          </div>
+          <p className="mt-1 text-xs text-muted">
+            {isAdmin
+              ? "These players won’t show on the Cup board until they’re on a side."
+              : "Waiting on the admin to finish the draft."}
           </p>
+          <ul className="mt-3 flex flex-wrap gap-2">
+            {unassigned.map((p) => (
+              <li
+                key={p.id}
+                className="rounded-full border border-mist bg-white px-3 py-1.5 text-sm font-medium text-ink"
+              >
+                {p.display_name}
+              </li>
+            ))}
+          </ul>
         </div>
       ) : null}
 

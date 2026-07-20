@@ -60,6 +60,8 @@ export function CourseTab({ courseName, holes }: CourseTabProps) {
   }, [ordered]);
 
   const [openFlyover, setOpenFlyover] = useState<number | null>(null);
+  const [videoLoading, setVideoLoading] = useState(false);
+  const [videoError, setVideoError] = useState(false);
 
   const frontPar = sumPar(front);
   const backPar = sumPar(back);
@@ -133,8 +135,8 @@ export function CourseTab({ courseName, holes }: CourseTabProps) {
         <p className="mt-3 max-w-2xl text-sm text-muted">{SEWANEE_ABOUT.renovation}</p>
       </div>
 
-      <div className="mt-4 flex flex-wrap gap-3 text-xs animate-fade">
-        <span className="inline-flex items-center gap-2 rounded-full border border-mist bg-white px-3 py-1.5 text-ink">
+      <div className="mt-4 flex flex-wrap gap-3 text-sm animate-fade">
+        <span className="inline-flex items-center gap-2 rounded-full border border-mist bg-white px-3 py-1.5 font-medium text-ink">
           <span
             className="h-2.5 w-2.5 rounded-full"
             style={{ backgroundColor: "#582C83" }}
@@ -142,7 +144,7 @@ export function CourseTab({ courseName, holes }: CourseTabProps) {
           />
           Purple tees
         </span>
-        <span className="inline-flex items-center gap-2 rounded-full border border-mist bg-white px-3 py-1.5 text-ink">
+        <span className="inline-flex items-center gap-2 rounded-full border border-mist bg-white px-3 py-1.5 font-medium text-ink">
           <span
             className="h-2.5 w-2.5 rounded-full border border-ink/30 bg-white"
             aria-hidden
@@ -152,7 +154,7 @@ export function CourseTab({ courseName, holes }: CourseTabProps) {
       </div>
 
       <div
-        className="mt-6 overflow-x-auto rounded-2xl border border-mist bg-white shadow-[0_6px_20px_rgba(20,32,27,0.07)] animate-fade"
+        className="scroll-fade-x mt-6 overflow-x-auto rounded-2xl border border-mist bg-white shadow-[0_6px_20px_rgba(20,32,27,0.07)] animate-fade"
         data-swipe-ignore
       >
         <table className="w-full min-w-[760px] border-collapse text-xs sm:text-sm">
@@ -270,9 +272,14 @@ export function CourseTab({ courseName, holes }: CourseTabProps) {
                 <button
                   type="button"
                   aria-expanded={isOpen}
-                  onClick={() =>
-                    setOpenFlyover(isOpen ? null : flyover.frontHole)
-                  }
+                  onClick={() => {
+                    const next = isOpen ? null : flyover.frontHole;
+                    setOpenFlyover(next);
+                    if (next != null) {
+                      setVideoLoading(true);
+                      setVideoError(false);
+                    }
+                  }}
                   className="flex w-full items-center justify-between gap-3 px-4 py-3.5 text-left hover:bg-fog/60"
                 >
                   <div>
@@ -285,32 +292,62 @@ export function CourseTab({ courseName, holes }: CourseTabProps) {
                         </span>
                       ) : null}
                     </p>
-                    <p className="mt-1 text-xs text-muted">
+                    <p className="mt-1 text-sm text-muted">
                       Front: {holeStatsLine(frontHole) ?? "—"}
                       {" · "}
                       Back: {holeStatsLine(backHole) ?? "—"}
                     </p>
                   </div>
-                  <span className="shrink-0 text-xs tracking-wide text-fairway uppercase">
+                  <span className="shrink-0 rounded-full border border-fairway/30 px-3 py-1 text-xs font-semibold tracking-wide text-fairway uppercase">
                     {isOpen ? "Close" : "Play"}
                   </span>
                 </button>
 
                 {isOpen ? (
                   <div className="border-t border-mist bg-fog/40 px-3 pb-3 pt-3 sm:px-4">
-                    <div className="overflow-hidden rounded-xl border border-mist bg-black">
+                    <div className="relative overflow-hidden rounded-xl border border-mist bg-black">
+                      {videoLoading ? (
+                        <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-2 bg-black/80 text-fog">
+                          <span
+                            className="h-6 w-6 animate-spin rounded-full border-2 border-fog/30 border-t-fog"
+                            aria-hidden
+                          />
+                          <span className="text-xs font-medium">Loading video…</span>
+                        </div>
+                      ) : null}
+                      {videoError ? (
+                        <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-1 bg-black/85 px-4 text-center text-fog">
+                          <span className="text-sm font-medium">
+                            Video couldn’t load.
+                          </span>
+                          <a
+                            href={SEWANEE_COURSE_PAGE}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-xs text-mist underline-offset-2 hover:underline"
+                          >
+                            View on Sewanee site →
+                          </a>
+                        </div>
+                      ) : null}
                       <video
                         key={flyover.src}
                         controls
                         playsInline
                         preload="metadata"
+                        onLoadedData={() => setVideoLoading(false)}
+                        onCanPlay={() => setVideoLoading(false)}
+                        onError={() => {
+                          setVideoLoading(false);
+                          setVideoError(true);
+                        }}
                         className="aspect-video w-full bg-black"
                       >
                         <source src={flyover.src} type={flyover.type} />
                         Your browser does not support this video.
                       </video>
                     </div>
-                    <p className="mt-2 text-[11px] text-muted">
+                    <p className="mt-2 text-xs text-muted">
                       Video courtesy of{" "}
                       <a
                         href={SEWANEE_COURSE_PAGE}

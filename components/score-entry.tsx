@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useState, useEffectEvent } from "react";
+import { useEffect, useMemo, useRef, useState, useEffectEvent } from "react";
+import { SavedBadge } from "@/components/saved-badge";
 import {
   holesForRound,
   nineCaption,
@@ -53,6 +54,14 @@ export function ScoreEntry({
   const [activeHole, setActiveHole] = useState(firstHole);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
+  const [justSaved, setJustSaved] = useState(false);
+  const savedTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (savedTimer.current) clearTimeout(savedTimer.current);
+    };
+  }, []);
 
   const partner = players.find((p) => p.id === partnerId) ?? null;
 
@@ -192,6 +201,9 @@ export function ScoreEntry({
     }
 
     setScores((prev) => ({ ...prev, [activeHole]: strokes }));
+    setJustSaved(true);
+    if (savedTimer.current) clearTimeout(savedTimer.current);
+    savedTimer.current = setTimeout(() => setJustSaved(false), 1400);
   }
 
   function bump(delta: number) {
@@ -233,7 +245,10 @@ export function ScoreEntry({
         </p>
       </header>
 
-      <div className="mt-6 flex gap-2 overflow-x-auto pb-2 animate-fade" data-swipe-ignore>
+      <div
+        className="scroll-fade-x mt-6 flex gap-2 overflow-x-auto pb-2 animate-fade"
+        data-swipe-ignore
+      >
         {roundHoles.map((h) => {
           const scored = scores[h.hole_number] != null;
           const isActive = h.hole_number === activeHole;
@@ -243,7 +258,7 @@ export function ScoreEntry({
               type="button"
               onClick={() => setActiveHole(h.hole_number)}
               className={[
-                "flex h-11 w-11 shrink-0 flex-col items-center justify-center rounded-full border text-xs transition-all duration-150",
+                "flex h-12 w-12 shrink-0 flex-col items-center justify-center rounded-full border text-sm font-medium transition-all duration-150",
                 isActive
                   ? "border-pine bg-pine text-fog shadow-[0_2px_8px_rgba(12,31,24,0.35)]"
                   : scored
@@ -286,6 +301,11 @@ export function ScoreEntry({
               <p className="font-display text-5xl text-ink">
                 {currentStrokes ?? "—"}
               </p>
+              {justSaved ? (
+                <div className="mt-1 flex justify-end">
+                  <SavedBadge />
+                </div>
+              ) : null}
             </div>
           </div>
 
@@ -393,11 +413,23 @@ export function ScoreEntry({
         </div>
       ) : null}
 
-      <footer className="mt-6 flex items-center justify-between text-sm text-muted">
+      <footer className="mt-6 flex items-center justify-between gap-3 text-sm text-muted">
         <span>
           {holesPlayed}/{roundHoles.length} holes · gross {total || "—"}
         </span>
-        <span>{saving ? "Saving…" : message || "Saved to cloud"}</span>
+        <span className="flex items-center gap-1.5 font-medium">
+          {message ? (
+            <span className="text-danger">{message}</span>
+          ) : (
+            <>
+              <span
+                className="live-dot h-1.5 w-1.5 rounded-full bg-fairway"
+                aria-hidden
+              />
+              {saving ? "Saving…" : "Saved to cloud"}
+            </>
+          )}
+        </span>
       </footer>
     </section>
   );

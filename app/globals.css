@@ -8,7 +8,8 @@
   --fog: #f3f6f4;
   --gold: #c4a35a;
   --ink: #14201b;
-  --muted: #5c7268;
+  /* Darkened from #5c7268 for better outdoor/daylight contrast on white. */
+  --muted: #48594f;
   --danger: #a63d3d;
   --background: var(--fog);
   --foreground: var(--ink);
@@ -613,4 +614,64 @@ body {
 
 .font-invite-serif {
   font-family: var(--font-invite-serif), Georgia, serif;
+}
+
+/* —— Shared UI utilities —— */
+
+/* Hints that a row scrolls horizontally by softening its edges. */
+.scroll-fade-x {
+  mask-image: linear-gradient(
+    to right,
+    transparent,
+    black 4%,
+    black 92%,
+    transparent
+  );
+  -webkit-mask-image: linear-gradient(
+    to right,
+    transparent,
+    black 4%,
+    black 92%,
+    transparent
+  );
+}
+
+@keyframes live-pulse {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.45;
+    transform: scale(0.82);
+  }
+}
+
+.live-dot {
+  animation: live-pulse 1.8s ease-in-out infinite;
+}
+
+@keyframes saved-pop {
+  0% {
+    opacity: 0;
+    transform: scale(0.7) translateY(2px);
+  }
+  25% {
+    opacity: 1;
+    transform: scale(1.05) translateY(0);
+  }
+  35% {
+    transform: scale(1) translateY(0);
+  }
+  75% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+.saved-badge {
+  animation: saved-pop 1.4s ease-out both;
 }
