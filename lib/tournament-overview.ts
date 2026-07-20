@@ -27,6 +27,13 @@ export function mapsLinksForAddress(address: string) {
 
 export const WEEKEND_DATES = "Thursday, July 30 – Sunday, August 2, 2026";
 
+/**
+ * Start of the first tournament day (Thursday) in America/Chicago.
+ * July is CDT (UTC−5). Once local time reaches this instant, the homepage
+ * countdown is removed entirely.
+ */
+export const TOURNAMENT_START_MS = Date.parse("2026-07-30T05:00:00.000Z");
+
 export const TEE_TIMES = [
   {
     day: "Thursday, July 30",

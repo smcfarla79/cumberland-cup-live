@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { BrandLogo } from "@/components/brand-logo";
+import { CupCountdown } from "@/components/cup-countdown";
 import {
   fetchSewaneeWeather,
   formatForecastDay,
@@ -266,6 +267,8 @@ export function HomeTab({
           </div>
         </div>
       </div>
+
+      <CupCountdown />
 
       <YourMatchCard
         rounds={rounds}
