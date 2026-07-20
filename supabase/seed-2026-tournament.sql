@@ -104,7 +104,7 @@ insert into public.rounds (id, tournament_id, name, day_number, play_date, scori
   (
     '00000000-0000-4000-8000-000000000303',
     '00000000-0000-4000-8000-000000000010',
-    'Friday PM — Back 9 · scramble/shamble (1 pt)',
+    'Friday PM — Back 9 · 2-man shamble (1 pt)',
     2,
     '2026-07-31',
     'match'

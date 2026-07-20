@@ -57,8 +57,7 @@ export const COMPETITION = [
   },
   {
     title: "Friday · Day 1",
-    detail:
-      "AM: 9 holes 2-man best ball (1 pt). PM: modified scramble / 2-man shamble (1 pt).",
+    detail: "AM: 9 holes 2-man best ball (1 pt). PM: 9 holes 2-man shamble (1 pt).",
   },
   {
     title: "Saturday · Day 2",

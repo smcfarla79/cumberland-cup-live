@@ -32,7 +32,7 @@ import type { Hole, Player, Round, Team } from "@/lib/types";
 function shortRoundLabel(round: Round) {
   const name = round.name;
   if (/friday am/i.test(name)) return "Friday AM · Best Ball";
-  if (/friday pm/i.test(name)) return "Friday PM · Scramble / Shamble";
+  if (/friday pm/i.test(name)) return "Friday PM · 2-Man Shamble";
   if (/saturday am/i.test(name)) return "Saturday AM · Scramble";
   if (/1v1|singles|match play/i.test(name)) {
     return `Singles · ${round.hole_count === 9 ? "9" : "18"} holes`;

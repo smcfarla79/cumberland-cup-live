@@ -24,7 +24,7 @@ update public.rounds
 set
   hole_count = 9,
   nine_label = 'back',
-  name = 'Friday PM — Back 9 · scramble/shamble (1 pt)'
+  name = 'Friday PM — Back 9 · 2-man shamble (1 pt)'
 where id = '00000000-0000-4000-8000-000000000303';
 
 update public.rounds

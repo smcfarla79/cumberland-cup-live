@@ -121,7 +121,7 @@ async function main() {
       throw new Error(`Match ${match.match_number} missing players`);
     }
 
-    // Pad to at least 1 player each; for scramble/shamble still best-ball nets
+    // Pad to at least 1 player each; shamble still scores as best-ball nets
     backHoles.forEach((hole, hi) => {
       const result = script[hi] ?? "h";
       const aBest = result === "b" ? hole.par + 1 : hole.par;
