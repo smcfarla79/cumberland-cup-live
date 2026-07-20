@@ -8,7 +8,7 @@ import {
   INVITE_COPY,
   INVITE_HOST,
 } from "@/lib/invite";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 type InviteRevealProps = {
   onContinue: () => void;
@@ -45,19 +45,30 @@ const PHASE_INDEX: Record<Phase, number> = {
 
 export function InviteReveal({ onContinue }: InviteRevealProps) {
   const [phase, setPhase] = useState<Phase>("sealed");
+  const timersRef = useRef<number[]>([]);
 
   useEffect(() => {
-    const timers = PHASE_ORDER.map(({ phase: p, delay }) =>
+    timersRef.current = PHASE_ORDER.map(({ phase: p, delay }) =>
       window.setTimeout(() => setPhase(p), delay),
     );
-    return () => timers.forEach((t) => window.clearTimeout(t));
+    return () => {
+      timersRef.current.forEach((t) => window.clearTimeout(t));
+      timersRef.current = [];
+    };
   }, []);
 
   const idx = PHASE_INDEX[phase];
   const atLeast = (p: Phase) => idx >= PHASE_INDEX[p];
   const isDone = atLeast("settled");
 
+  function clearPhaseTimers() {
+    timersRef.current.forEach((t) => window.clearTimeout(t));
+    timersRef.current = [];
+  }
+
+  /** Jump to the finished invite in place (for tapping the card mid-reveal). */
   function skipToEnd() {
+    clearPhaseTimers();
     setPhase("settled");
   }
 
@@ -182,7 +193,10 @@ export function InviteReveal({ onContinue }: InviteRevealProps) {
       ) : (
         <button
           type="button"
-          onClick={skipToEnd}
+          onClick={(e) => {
+            e.stopPropagation();
+            onContinue();
+          }}
           className="invite-skip-hint relative z-10 mt-6 text-center text-xs text-mist/60 underline-offset-2 hover:text-mist hover:underline"
         >
           Skip animation
