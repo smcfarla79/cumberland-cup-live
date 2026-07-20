@@ -15,8 +15,6 @@ type CourseTabProps = {
 
 type YardKey = "yards" | "yards_purple";
 
-const VIDEO_LOAD_TIMEOUT_MS = 7000;
-
 function cellValue(
   hole: Hole | undefined,
   key: "par" | "handicap_index" | YardKey,
@@ -68,9 +66,10 @@ export function CourseTab({ courseName, holes }: CourseTabProps) {
   }, [ordered]);
 
   const [openFlyover, setOpenFlyover] = useState<number | null>(null);
-  const [videoLoading, setVideoLoading] = useState(false);
   const [videoError, setVideoError] = useState(false);
-  const loadTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  /** True until playback starts — shows a play affordance, never a spinner. */
+  const [showPlayPrompt, setShowPlayPrompt] = useState(false);
+  const videoRef = useRef<HTMLVideoElement | null>(null);
 
   const frontPar = sumPar(front);
   const backPar = sumPar(back);
@@ -84,51 +83,47 @@ export function CourseTab({ courseName, holes }: CourseTabProps) {
     [openFlyover],
   );
 
-  function clearLoadTimeout() {
-    if (loadTimeoutRef.current != null) {
-      clearTimeout(loadTimeoutRef.current);
-      loadTimeoutRef.current = null;
-    }
-  }
-
-  function markVideoReady() {
-    clearLoadTimeout();
-    setVideoLoading(false);
-  }
-
-  function markVideoFailed() {
-    clearLoadTimeout();
-    setVideoLoading(false);
-    setVideoError(true);
-  }
-
   function openHoleFlyover(frontHole: number) {
-    clearLoadTimeout();
     setOpenFlyover(frontHole);
     setVideoError(false);
 
     const flyover = SEWANEE_FLYOVERS.find((f) => f.frontHole === frontHole);
     if (!flyover || !browserCanPlayType(flyover.type)) {
-      setVideoLoading(false);
+      setShowPlayPrompt(false);
       setVideoError(true);
       return;
     }
 
-    setVideoLoading(true);
-    loadTimeoutRef.current = setTimeout(() => {
-      setVideoLoading(false);
-      setVideoError(true);
-    }, VIDEO_LOAD_TIMEOUT_MS);
+    // User already tapped — try autoplay on the next paint; if the browser
+    // blocks it, keep a clear Play button instead of a loading spinner.
+    setShowPlayPrompt(true);
   }
 
   function closeFlyover() {
-    clearLoadTimeout();
+    videoRef.current?.pause();
     setOpenFlyover(null);
-    setVideoLoading(false);
     setVideoError(false);
+    setShowPlayPrompt(false);
   }
 
-  useEffect(() => () => clearLoadTimeout(), []);
+  function startPlayback() {
+    const video = videoRef.current;
+    if (!video) return;
+    void video.play().then(
+      () => setShowPlayPrompt(false),
+      () => setShowPlayPrompt(true),
+    );
+  }
+
+  useEffect(() => {
+    if (!activeFlyover || videoError) return;
+    const video = videoRef.current;
+    if (!video) return;
+    void video.play().then(
+      () => setShowPlayPrompt(false),
+      () => setShowPlayPrompt(true),
+    );
+  }, [activeFlyover, videoError]);
 
   const holeHeaders = [
     ...Array.from({ length: 9 }, (_, i) => i + 1),
@@ -305,7 +300,7 @@ export function CourseTab({ courseName, holes }: CourseTabProps) {
               Descriptions & flyovers
             </h2>
             <p className="mt-2 max-w-2xl text-sm text-muted">
-              {SEWANEE_ABOUT.flyoverNote} Tap a hole to play the video — front
+              {SEWANEE_ABOUT.flyoverNote} Tap a hole to open the flyover — front
               and back tees share the same physical hole.
             </p>
           </div>
@@ -365,17 +360,8 @@ export function CourseTab({ courseName, holes }: CourseTabProps) {
                 {isOpen ? (
                   <div className="border-t border-mist bg-fog/40 px-3 pb-3 pt-3 sm:px-4">
                     <div className="relative overflow-hidden rounded-xl border border-mist bg-black">
-                      {videoLoading ? (
-                        <div className="pointer-events-none absolute inset-0 z-10 flex flex-col items-center justify-center gap-2 bg-black/80 text-fog">
-                          <span
-                            className="h-6 w-6 animate-spin rounded-full border-2 border-fog/30 border-t-fog"
-                            aria-hidden
-                          />
-                          <span className="text-xs font-medium">Loading video…</span>
-                        </div>
-                      ) : null}
                       {videoError ? (
-                        <div className="pointer-events-none absolute inset-0 z-10 flex flex-col items-center justify-center gap-1 bg-black/85 px-4 text-center text-fog">
+                        <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-1 bg-black/85 px-4 text-center text-fog">
                           <span className="text-sm font-medium">
                             Video couldn’t load.
                           </span>
@@ -383,20 +369,46 @@ export function CourseTab({ courseName, holes }: CourseTabProps) {
                             href={SEWANEE_COURSE_PAGE}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="pointer-events-auto text-xs text-mist underline-offset-2 hover:underline"
+                            className="text-xs text-mist underline-offset-2 hover:underline"
                           >
                             View on Sewanee site →
                           </a>
                         </div>
                       ) : null}
+                      {!videoError && showPlayPrompt ? (
+                        <button
+                          type="button"
+                          onClick={startPlayback}
+                          className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 bg-black/45 text-fog"
+                          aria-label={`Play ${flyover.title} flyover`}
+                        >
+                          <span className="flex h-14 w-14 items-center justify-center rounded-full bg-white/95 text-pine shadow-[0_6px_20px_rgba(0,0,0,0.35)]">
+                            <svg
+                              viewBox="0 0 24 24"
+                              fill="currentColor"
+                              className="ml-0.5 h-7 w-7"
+                              aria-hidden
+                            >
+                              <path d="M8 5.5v13l11-6.5-11-6.5z" />
+                            </svg>
+                          </span>
+                          <span className="text-sm font-medium tracking-wide">
+                            Tap to play
+                          </span>
+                        </button>
+                      ) : null}
                       <video
                         key={activeFlyover?.src ?? flyover.src}
+                        ref={videoRef}
                         controls
                         playsInline
-                        preload="auto"
-                        onLoadedData={markVideoReady}
-                        onCanPlay={markVideoReady}
-                        onError={markVideoFailed}
+                        preload="metadata"
+                        onPlay={() => setShowPlayPrompt(false)}
+                        onPlaying={() => setShowPlayPrompt(false)}
+                        onError={() => {
+                          setShowPlayPrompt(false);
+                          setVideoError(true);
+                        }}
                         className="aspect-video w-full bg-black"
                       >
                         <source src={flyover.src} type={flyover.type} />
