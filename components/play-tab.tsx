@@ -13,9 +13,11 @@ type PlayTabProps = {
   holes: Hole[];
   teams: Team[];
   isAdmin: boolean;
-  /** Optional deep-link into a session when arriving from Cup “Now playing”. */
+  /** Optional deep-link into a session or exact match from Home/Cup. */
   initialRoundId?: string | null;
-  onConsumeInitialRound?: () => void;
+  initialMatchId?: string | null;
+  initialViewOnly?: boolean;
+  onConsumeInitialTarget?: () => void;
 };
 
 type PlayMode = "score" | "lineups";
@@ -29,7 +31,9 @@ export function PlayTab({
   teams,
   isAdmin,
   initialRoundId = null,
-  onConsumeInitialRound,
+  initialMatchId = null,
+  initialViewOnly = false,
+  onConsumeInitialTarget,
 }: PlayTabProps) {
   const [mode, setMode] = useState<PlayMode>("score");
 
@@ -87,7 +91,9 @@ export function PlayTab({
           isAdmin={isAdmin}
           title="Play"
           initialRoundId={initialRoundId}
-          onConsumeInitialRound={onConsumeInitialRound}
+          initialMatchId={initialMatchId}
+          initialViewOnly={initialViewOnly}
+          onConsumeInitialTarget={onConsumeInitialTarget}
         />
       )}
     </div>

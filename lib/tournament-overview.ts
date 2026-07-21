@@ -26,6 +26,7 @@ export function mapsLinksForAddress(address: string) {
 }
 
 export const WEEKEND_DATES = "Thursday, July 30 – Sunday, August 2, 2026";
+export const SEWANEE_TIME_ZONE = "America/Chicago";
 
 /**
  * Start of the first tournament day (Thursday) in America/Chicago.
@@ -33,6 +34,19 @@ export const WEEKEND_DATES = "Thursday, July 30 – Sunday, August 2, 2026";
  * countdown is removed entirely.
  */
 export const TOURNAMENT_START_MS = Date.parse("2026-07-30T05:00:00.000Z");
+
+/** Calendar date in Sewanee, independent of the device's local time zone. */
+export function sewaneeDateKey(date = new Date()) {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: SEWANEE_TIME_ZONE,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(date);
+  const value = (type: Intl.DateTimeFormatPartTypes) =>
+    parts.find((part) => part.type === type)?.value ?? "";
+  return `${value("year")}-${value("month")}-${value("day")}`;
+}
 
 export const TEE_TIMES = [
   {

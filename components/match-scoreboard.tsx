@@ -2,7 +2,10 @@
 
 import { useEffect, useMemo, useRef, useState, useEffectEvent } from "react";
 import { SavedBadge } from "@/components/saved-badge";
+import { TeamSwatch } from "@/components/team-swatch";
 import { holesForRound } from "@/lib/course-holes";
+import { calculateMatchPlayStanding } from "@/lib/match-play";
+import { compactMatchStatus } from "@/lib/match-status";
 import {
   bestBallNet,
   formatLabel,
@@ -12,7 +15,7 @@ import {
   toParLabel,
 } from "@/lib/scoring";
 import { createClient } from "@/lib/supabase/client";
-import { teamAccentColor } from "@/lib/team-colors";
+import { teamAccentColor, teamWashColor } from "@/lib/team-colors";
 import type {
   Hole,
   HoleScore,
@@ -31,6 +34,7 @@ type MatchScoreboardProps = {
   teams: Team[];
   sessionPlayerId: string;
   isAdmin: boolean;
+  viewOnly?: boolean;
   onBack: () => void;
 };
 
@@ -52,6 +56,7 @@ export function MatchScoreboard({
   teams,
   sessionPlayerId,
   isAdmin,
+  viewOnly = false,
   onBack,
 }: MatchScoreboardProps) {
   const format = resolvePlayFormat(round);
@@ -109,6 +114,10 @@ export function MatchScoreboard({
 
   useEffect(() => {
     void loadScores();
+    const id = window.setInterval(() => {
+      void loadScores();
+    }, 8000);
+    return () => window.clearInterval(id);
   }, [round.id, match.id]);
 
   useEffect(() => {
@@ -119,8 +128,56 @@ export function MatchScoreboard({
 
   const hole =
     roundHoles.find((h) => h.hole_number === activeHole) ?? roundHoles[0];
+  const standing =
+    teamA && teamB
+      ? calculateMatchPlayStanding({
+          round,
+          holes,
+          sideA,
+          sideB,
+          sideSize: match.side_size,
+          players,
+          scoresByPlayer,
+          teamAName: teamA.name,
+          teamBName: teamB.name,
+        })
+      : null;
+  const finalWinner =
+    standing?.finalResult ??
+    (match.is_halved
+      ? "halve"
+      : match.winning_team_id === teamA?.id
+        ? "team_a"
+        : match.winning_team_id === teamB?.id
+          ? "team_b"
+          : null);
+  const matchFinished = match.status === "complete" || Boolean(finalWinner);
+  const matchStatus = standing
+    ? compactMatchStatus({
+        lead: standing.lead,
+        holesPlayed: standing.holesPlayed,
+        holesRemaining: standing.holesRemaining,
+        finalResult: finalWinner,
+        closedEarly: Boolean(finalWinner && standing.holesRemaining > 0),
+      })
+    : "Not started";
+  const progressLabel = matchFinished
+    ? "Finished"
+    : standing && standing.holesPlayed > 0
+      ? `Thru ${standing.holesPlayed}`
+      : "Not started";
+  const matchLead = standing?.lead ?? 0;
+  const teamAIsAhead = matchLead > 0 || finalWinner === "team_a";
+  const teamBIsAhead = matchLead < 0 || finalWinner === "team_b";
+  const colorA = teamA ? teamAccentColor(teamA.color, "gold") : "#c4a35a";
+  const colorB = teamB ? teamAccentColor(teamB.color, "green") : "#2f6b4f";
+  const centeredStatus =
+    standing?.holesPlayed === 0 && !matchFinished
+      ? "VS"
+      : matchStatus.toUpperCase();
 
   function canEditPlayer(playerId: string) {
+    if (viewOnly) return false;
     if (isAdmin) return true;
     if (playerId === sessionPlayerId) return true;
     const mySide = match.players.find((p) => p.player_id === sessionPlayerId);
@@ -335,12 +392,95 @@ export function MatchScoreboard({
       <p className="mt-1 text-xs text-muted">
         Signed in as {sessionPlayer?.display_name ?? "Unknown"}
         {isAdmin ? " · admin" : ""}
-        {shareTeamScore
+        {viewOnly
+          ? " — live view only"
+          : shareTeamScore
           ? " — one score updates both partners"
           : isAdmin
             ? " — use − / + under any player"
             : " — you can edit your row and your partner’s"}
       </p>
+
+      {teamA && teamB ? (
+        <div className="mt-3 rounded-xl border border-mist bg-white px-3 py-2 shadow-[0_3px_12px_rgba(20,32,27,0.05)]">
+          <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
+            <div
+              className="flex min-w-0 items-center gap-1.5 rounded-lg px-2 py-1.5"
+              style={
+                teamAIsAhead
+                  ? {
+                      backgroundColor: teamWashColor(colorA),
+                      boxShadow: `inset 0 0 0 1px ${colorA}40`,
+                    }
+                  : undefined
+              }
+            >
+              <TeamSwatch color={colorA} className="h-2 w-2" />
+              <span
+                className={[
+                  "truncate text-xs",
+                  teamAIsAhead ? "font-semibold" : "font-medium",
+                ].join(" ")}
+                style={teamAIsAhead ? { color: colorA } : undefined}
+              >
+                {teamA.name}
+              </span>
+              {teamAIsAhead ? (
+                <span
+                  className="ml-auto shrink-0 font-display text-sm leading-none"
+                  style={{ color: colorA }}
+                >
+                  {matchStatus.toUpperCase()}
+                </span>
+              ) : null}
+            </div>
+
+            <div className="min-w-8 text-center">
+              {!teamAIsAhead && !teamBIsAhead ? (
+                <p className="font-display text-base leading-none text-ink">
+                  {centeredStatus}
+                </p>
+              ) : (
+                <span className="mx-auto block h-px w-5 bg-mist" aria-hidden />
+              )}
+            </div>
+
+            <div
+              className="flex min-w-0 items-center justify-end gap-1.5 rounded-lg px-2 py-1.5 text-right"
+              style={
+                teamBIsAhead
+                  ? {
+                      backgroundColor: teamWashColor(colorB),
+                      boxShadow: `inset 0 0 0 1px ${colorB}40`,
+                    }
+                  : undefined
+              }
+            >
+              {teamBIsAhead ? (
+                <span
+                  className="mr-auto shrink-0 font-display text-sm leading-none"
+                  style={{ color: colorB }}
+                >
+                  {matchStatus.toUpperCase()}
+                </span>
+              ) : null}
+              <span
+                className={[
+                  "truncate text-xs",
+                  teamBIsAhead ? "font-semibold" : "font-medium",
+                ].join(" ")}
+                style={teamBIsAhead ? { color: colorB } : undefined}
+              >
+                {teamB.name}
+              </span>
+              <TeamSwatch color={colorB} className="h-2 w-2" />
+            </div>
+          </div>
+          <p className="mt-1 text-center text-[9px] font-medium tracking-wide text-muted uppercase">
+            {progressLabel}
+          </p>
+        </div>
+      ) : null}
 
       <div
         className="scroll-fade-x mt-5 flex gap-2 overflow-x-auto pb-2"

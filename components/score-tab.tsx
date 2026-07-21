@@ -27,7 +27,9 @@ type ScoreTabProps = {
   isAdmin: boolean;
   title?: string;
   initialRoundId?: string | null;
-  onConsumeInitialRound?: () => void;
+  initialMatchId?: string | null;
+  initialViewOnly?: boolean;
+  onConsumeInitialTarget?: () => void;
 };
 
 type MatchWithPlayers = Match & { players: MatchPlayer[] };
@@ -56,7 +58,9 @@ export function ScoreTab({
   isAdmin,
   title = "Play",
   initialRoundId = null,
-  onConsumeInitialRound,
+  initialMatchId = null,
+  initialViewOnly = false,
+  onConsumeInitialTarget,
 }: ScoreTabProps) {
   const competitionRounds = useMemo(
     () =>
@@ -75,6 +79,7 @@ export function ScoreTab({
     Record<string, Record<number, number>>
   >({});
   const [selectedMatchId, setSelectedMatchId] = useState<string | null>(null);
+  const [selectedMatchViewOnly, setSelectedMatchViewOnly] = useState(false);
   const [strokePlayerId, setStrokePlayerId] = useState<string | null>(null);
   const [pickingSession, setPickingSession] = useState(false);
   const [message, setMessage] = useState("");
@@ -151,20 +156,39 @@ export function ScoreTab({
     setScoresByPlayer(scoreMap);
     setUpdatedAt(new Date());
     setMessage("");
+
+    if (initialMatchId && initialRoundId === round.id) {
+      const targetExists = withPlayers.some((match) => match.id === initialMatchId);
+      if (targetExists) {
+        setSelectedMatchId(initialMatchId);
+        setSelectedMatchViewOnly(initialViewOnly);
+      }
+      onConsumeInitialTarget?.();
+    }
   });
 
-  // Deep-link from Cup “Now playing”
+  // Deep-link from Home/Cup into a session. Exact match links are consumed
+  // after that round's asynchronous match board has loaded.
   useEffect(() => {
     if (!initialRoundId) return;
     const round = rounds.find((r) => r.id === initialRoundId) ?? null;
     if (round) {
       setSelectedRound(round);
       setSelectedMatchId(null);
+      setSelectedMatchViewOnly(false);
       setStrokePlayerId(null);
       setPickingSession(false);
     }
-    onConsumeInitialRound?.();
-  }, [initialRoundId, rounds, onConsumeInitialRound]);
+    if (!initialMatchId || round?.scoring_format === "stroke") {
+      onConsumeInitialTarget?.();
+    }
+  }, [
+    initialRoundId,
+    initialMatchId,
+    initialViewOnly,
+    rounds,
+    onConsumeInitialTarget,
+  ]);
 
   // Auto-open the best live match session on first visit
   useEffect(() => {
@@ -267,8 +291,10 @@ export function ScoreTab({
         teams={teams}
         sessionPlayerId={sessionPlayerId}
         isAdmin={isAdmin}
+        viewOnly={selectedMatchViewOnly}
         onBack={() => {
           setSelectedMatchId(null);
+          setSelectedMatchViewOnly(false);
           void loadLiveBoard(selectedRound);
         }}
       />
@@ -469,7 +495,10 @@ export function ScoreTab({
                             ? "team_b"
                             : standing?.finalResult ?? null
                     }
-                    onClick={() => setSelectedMatchId(match.id)}
+                    onClick={() => {
+                      setSelectedMatchId(match.id);
+                      setSelectedMatchViewOnly(false);
+                    }}
                   />
                 </li>
               );

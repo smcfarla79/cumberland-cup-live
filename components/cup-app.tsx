@@ -28,7 +28,11 @@ type Gate = "loading" | "pin" | "invite" | "player" | "app" | "error";
 export function CupApp() {
   const [gate, setGate] = useState<Gate>("loading");
   const [tab, setTab] = useState<AppTab>("home");
-  const [playRoundId, setPlayRoundId] = useState<string | null>(null);
+  const [playTarget, setPlayTarget] = useState<{
+    roundId: string;
+    matchId?: string;
+    viewOnly?: boolean;
+  } | null>(null);
   const [error, setError] = useState("");
   const [tournament, setTournament] = useState<Tournament | null>(null);
   const [players, setPlayers] = useState<Player[]>([]);
@@ -322,8 +326,11 @@ export function CupApp() {
               teams={teams}
               players={players}
               sessionPlayerId={session.playerId}
-              onGoToPlay={(roundId) => {
-                setPlayRoundId(roundId);
+              isAdmin={
+                players.find((p) => p.id === session.playerId)?.is_admin === true
+              }
+              onGoToPlay={(roundId, matchId, viewOnly) => {
+                setPlayTarget({ roundId, matchId, viewOnly });
                 setTab("play");
               }}
             />
@@ -336,7 +343,7 @@ export function CupApp() {
               holes={holes}
               sessionPlayerId={session.playerId}
               onGoToPlay={(roundId) => {
-                setPlayRoundId(roundId);
+                setPlayTarget({ roundId });
                 setTab("play");
               }}
             />
@@ -352,8 +359,10 @@ export function CupApp() {
               isAdmin={
                 players.find((p) => p.id === session.playerId)?.is_admin === true
               }
-              initialRoundId={playRoundId}
-              onConsumeInitialRound={() => setPlayRoundId(null)}
+              initialRoundId={playTarget?.roundId ?? null}
+              initialMatchId={playTarget?.matchId ?? null}
+              initialViewOnly={playTarget?.viewOnly ?? false}
+              onConsumeInitialTarget={() => setPlayTarget(null)}
             />
           ) : null}
           {tab === "teams" ? (
