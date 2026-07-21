@@ -3,7 +3,7 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { BrandLogo } from "@/components/brand-logo";
 import { CupCountdown } from "@/components/cup-countdown";
-import { TodaysMatches } from "@/components/todays-matches";
+import { TodaysMatch } from "@/components/todays-match";
 import {
   fetchSewaneeWeather,
   formatForecastDay,
@@ -76,7 +76,6 @@ type HomeTabProps = {
   teams: Team[];
   players: Player[];
   sessionPlayerId: string;
-  isAdmin: boolean;
   onGoToPlay: (roundId: string, matchId?: string, viewOnly?: boolean) => void;
 };
 
@@ -86,13 +85,11 @@ export function HomeTab({
   teams,
   players,
   sessionPlayerId,
-  isAdmin,
   onGoToPlay,
 }: HomeTabProps) {
   const [weather, setWeather] = useState<WeatherSnapshot | null>(null);
   const [weatherError, setWeatherError] = useState("");
   const [nowMs, setNowMs] = useState<number | null>(null);
-  const [previewDate, setPreviewDate] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -122,7 +119,6 @@ export function HomeTab({
   const theme = weather ? weatherSceneTheme(weather.weatherCode) : null;
   const tournamentStarted = nowMs != null && nowMs >= TOURNAMENT_START_MS;
   const today = nowMs == null ? null : sewaneeDateKey(new Date(nowMs));
-  const scheduleDate = previewDate ?? (tournamentStarted ? today : null);
 
   return (
     <div className="mx-auto w-full max-w-2xl px-4 py-5 sm:px-5">
@@ -152,49 +148,14 @@ export function HomeTab({
         </div>
       </div>
 
-      {!tournamentStarted && isAdmin ? (
-        <div className="mt-4 rounded-2xl border border-mist bg-white p-3 shadow-[0_4px_14px_rgba(20,32,27,0.06)]">
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <p className="text-xs font-semibold tracking-[0.12em] text-muted uppercase">
-              Admin schedule preview
-            </p>
-            <div className="flex gap-1 rounded-full bg-fog p-1">
-              {[
-                { label: "Live", date: null },
-                { label: "Friday", date: "2026-07-31" },
-                { label: "Saturday", date: "2026-08-01" },
-              ].map((option) => {
-                const active = previewDate === option.date;
-                return (
-                  <button
-                    key={option.label}
-                    type="button"
-                    onClick={() => setPreviewDate(option.date)}
-                    className={[
-                      "rounded-full px-3 py-1.5 text-xs font-semibold transition",
-                      active
-                        ? "bg-pine text-fog shadow-sm"
-                        : "text-muted hover:bg-white hover:text-ink",
-                    ].join(" ")}
-                  >
-                    {option.label}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        </div>
-      ) : null}
-
-      {scheduleDate ? (
-        <TodaysMatches
-          today={scheduleDate}
+      {tournamentStarted && today ? (
+        <TodaysMatch
+          today={today}
           rounds={rounds}
           holes={holes}
           teams={teams}
           players={players}
           sessionPlayerId={sessionPlayerId}
-          isPreview={previewDate != null}
           onGoToPlay={onGoToPlay}
         />
       ) : (

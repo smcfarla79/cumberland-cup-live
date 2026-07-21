@@ -326,9 +326,6 @@ export function CupApp() {
               teams={teams}
               players={players}
               sessionPlayerId={session.playerId}
-              isAdmin={
-                players.find((p) => p.id === session.playerId)?.is_admin === true
-              }
               onGoToPlay={(roundId, matchId, viewOnly) => {
                 setPlayTarget({ roundId, matchId, viewOnly });
                 setTab("play");
