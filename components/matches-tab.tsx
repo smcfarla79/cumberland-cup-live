@@ -372,15 +372,46 @@ export function MatchesTab({
   }
 
   async function deleteMatch(matchId: string) {
+    const match = matches.find((item) => item.id === matchId);
+    if (!match) return;
+
+    const confirmed = window.confirm(
+      "Delete this match and any scores entered by its players for this round?",
+    );
+    if (!confirmed) return;
+
     setBusy(true);
     const supabase = createClient();
-    const { error } = await supabase.from("matches").delete().eq("id", matchId);
-    setBusy(false);
-    if (error) {
-      setMessage(error.message);
+    const { error: matchError } = await supabase
+      .from("matches")
+      .delete()
+      .eq("id", matchId);
+    if (matchError) {
+      setBusy(false);
+      setMessage(matchError.message);
       return;
     }
+
+    const playerIds = match.players.map((player) => player.player_id);
+    if (playerIds.length > 0) {
+      const { error: scoreError } = await supabase
+        .from("hole_scores")
+        .delete()
+        .eq("round_id", match.round_id)
+        .in("player_id", playerIds);
+      if (scoreError) {
+        setBusy(false);
+        setMessage(
+          `Match deleted, but its old scores could not be cleared: ${scoreError.message}`,
+        );
+        await refresh();
+        return;
+      }
+    }
+
+    setBusy(false);
     setDetailMatchId(null);
+    setMessage("");
     await refresh();
   }
 
