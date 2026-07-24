@@ -151,11 +151,26 @@ export function MatchesTab({
       });
     }
 
+    const usedPlayerIds = new Set(
+      withPlayers.flatMap((m) => m.players.map((p) => p.player_id)),
+    );
+
     setAssignments((assignmentRows as TeamAssignment[]) ?? []);
     setMatches(withPlayers);
     setScoresByPlayer(scoreMap);
-    setPicked(
-      Object.fromEntries(sortedTeams.map((t) => [t.id, [] as string[]])),
+    // Keep in-progress picks across live refreshes; only drop players who
+    // are no longer available (already lined up elsewhere).
+    setPicked((prev) => {
+      const next: Record<string, string[]> = {};
+      for (const team of sortedTeams) {
+        next[team.id] = (prev[team.id] ?? []).filter(
+          (id) => !usedPlayerIds.has(id),
+        );
+      }
+      return next;
+    });
+    setSelectedPlayerId((id) =>
+      id && usedPlayerIds.has(id) ? null : id,
     );
     setMessage("");
 
@@ -311,6 +326,9 @@ export function MatchesTab({
       setMessage(mpError.message);
       return;
     }
+    setPicked(
+      Object.fromEntries(sortedTeams.map((t) => [t.id, [] as string[]])),
+    );
     await refresh();
   }
 
@@ -470,6 +488,9 @@ export function MatchesTab({
             setDetailMatchId(null);
             setAdjusting(false);
             setSelectedPlayerId(null);
+            setPicked(
+              Object.fromEntries(sortedTeams.map((t) => [t.id, [] as string[]])),
+            );
           }}
           className="w-full rounded-2xl border border-mist bg-white px-4 py-3 text-ink shadow-[0_4px_14px_rgba(20,32,27,0.06)] outline-none focus:border-fairway"
         >
