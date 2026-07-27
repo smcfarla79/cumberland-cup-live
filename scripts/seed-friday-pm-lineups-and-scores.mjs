@@ -85,7 +85,7 @@ async function main() {
     },
     {
       match_number: 5,
-      a: ["Harrison Lee", "Larson Heitzenrater"],
+      a: ["Harrison Lee", "Chris McNulty"],
       b: ["Ben Clune", "Will Moore"],
     },
   ];

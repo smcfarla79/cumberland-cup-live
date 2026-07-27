@@ -42,7 +42,7 @@ const RAW = {
   "Tyler Fullerton": 8.3,
   "Billy Collins": 10.0,
   "Will Moore": 10.3,
-  "Larson Heitzenrater": 11.3,
+  // Chris McNulty: handicap TBD when available
   "Ben Clune": 12.4,
   "Taylor Rowe": 13.2,
   "Mike Walker": 14.2,
