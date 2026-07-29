@@ -34,7 +34,7 @@ function Unit({ value, label }: { value: number; label: string }) {
   );
 }
 
-/** Live countdown to Thursday’s tournament open; unmounts once that day starts. */
+/** Live countdown to first tee Thursday 3:00 PM CST; unmounts once it starts. */
 export function CupCountdown() {
   // null until mounted (avoids SSR/client clock mismatch); then Remaining | null
   const [remaining, setRemaining] = useState<Remaining | null>(null);
@@ -62,7 +62,7 @@ export function CupCountdown() {
         Countdown to the Cup
       </p>
       <p className="mt-1 text-sm text-muted">
-        Until Thursday, July 30 · Sewanee time
+        Until Thursday, July 30 · 3:00 PM CST
       </p>
       <div className="mt-4 flex items-start gap-1 sm:gap-2">
         <Unit value={remaining.days} label="Days" />

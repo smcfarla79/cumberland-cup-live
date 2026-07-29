@@ -29,11 +29,11 @@ export const WEEKEND_DATES = "Thursday, July 30 – Sunday, August 2, 2026";
 export const SEWANEE_TIME_ZONE = "America/Chicago";
 
 /**
- * Start of the first tournament day (Thursday) in America/Chicago.
+ * First tee Thursday afternoon in America/Chicago (3:00 PM CDT / CST label).
  * July is CDT (UTC−5). Once local time reaches this instant, the homepage
  * countdown is removed entirely.
  */
-export const TOURNAMENT_START_MS = Date.parse("2026-07-30T05:00:00.000Z");
+export const TOURNAMENT_START_MS = Date.parse("2026-07-30T20:00:00.000Z");
 
 /** Calendar date in Sewanee, independent of the device's local time zone. */
 export function sewaneeDateKey(date = new Date()) {
