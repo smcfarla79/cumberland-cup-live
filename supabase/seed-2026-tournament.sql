@@ -20,7 +20,7 @@ set
   course_id = excluded.course_id,
   is_active = excluded.is_active;
 
--- Players (20 attendees)
+-- Players (20 active + Larson on IR)
 insert into public.players (id, display_name) values
   ('00000000-0000-4000-8000-000000000101', 'Ben Clune'),
   ('00000000-0000-4000-8000-000000000102', 'Billy Collins'),
@@ -41,7 +41,8 @@ insert into public.players (id, display_name) values
   ('00000000-0000-4000-8000-000000000117', 'Shane Shelly'),
   ('00000000-0000-4000-8000-000000000118', 'James Snover'),
   ('00000000-0000-4000-8000-000000000119', 'Marshall Ussery'),
-  ('00000000-0000-4000-8000-000000000120', 'Mike Walker')
+  ('00000000-0000-4000-8000-000000000120', 'Mike Walker'),
+  ('00000000-0000-4000-8000-000000000121', 'Larson Heitzenrater')
 on conflict (display_name) do nothing;
 
 -- Link all players to this tournament
@@ -70,7 +71,8 @@ where display_name in (
   'Shane Shelly',
   'James Snover',
   'Marshall Ussery',
-  'Mike Walker'
+  'Mike Walker',
+  'Larson Heitzenrater'
 )
 on conflict do nothing;
 

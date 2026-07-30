@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState, useEffectEvent } from "react";
 import { TeamDraft } from "@/components/team-draft";
 import { TeamSwatch } from "@/components/team-swatch";
 import { createClient } from "@/lib/supabase/client";
+import { isActiveRosterPlayer } from "@/lib/player-status";
 import { teamAccentColor } from "@/lib/team-colors";
 import type { Player, Team, TeamAssignment } from "@/lib/types";
 
@@ -81,7 +82,9 @@ export function TeamsTab({
   }, [teams, editingNames]);
 
   const assignedIds = new Set(assignments.map((a) => a.player_id));
-  const unassigned = players.filter((p) => !assignedIds.has(p.id));
+  const unassigned = players.filter(
+    (p) => isActiveRosterPlayer(p) && !assignedIds.has(p.id),
+  );
 
   async function saveTeamNames() {
     setSavingNames(true);

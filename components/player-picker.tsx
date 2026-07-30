@@ -8,7 +8,28 @@ type PlayerPickerProps = {
   onSelect: (player: Player) => void;
 };
 
+function PlayerButton({
+  player,
+  onSelect,
+}: {
+  player: Player;
+  onSelect: (player: Player) => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={() => onSelect(player)}
+      className="w-full rounded-2xl border border-mist bg-white px-5 py-3.5 text-left text-base text-ink shadow-[0_4px_14px_rgba(20,32,27,0.06)] transition hover:border-fairway hover:bg-fog hover:shadow-[0_6px_18px_rgba(20,32,27,0.1)]"
+    >
+      {player.display_name}
+    </button>
+  );
+}
+
 export function PlayerPicker({ players, onSelect }: PlayerPickerProps) {
+  const active = players.filter((p) => p.status !== "ir");
+  const ir = players.filter((p) => p.status === "ir");
+
   return (
     <section className="mx-auto flex min-h-dvh w-full max-w-lg flex-col px-5 py-10">
       <div className="animate-rise">
@@ -22,18 +43,26 @@ export function PlayerPicker({ players, onSelect }: PlayerPickerProps) {
       </div>
 
       <ul className="mt-8 grid gap-2 animate-fade">
-        {players.map((player) => (
+        {active.map((player) => (
           <li key={player.id}>
-            <button
-              type="button"
-              onClick={() => onSelect(player)}
-              className="w-full rounded-2xl border border-mist bg-white px-5 py-3.5 text-left text-base text-ink shadow-[0_4px_14px_rgba(20,32,27,0.06)] transition hover:border-fairway hover:bg-fog hover:shadow-[0_6px_18px_rgba(20,32,27,0.1)]"
-            >
-              {player.display_name}
-            </button>
+            <PlayerButton player={player} onSelect={onSelect} />
           </li>
         ))}
       </ul>
+
+      {ir.length > 0 ? (
+        <div className="mt-10 animate-fade">
+          <h2 className="text-sm tracking-[0.18em] text-fairway uppercase">IR</h2>
+          <p className="mt-2 text-sm text-muted">Injured reserve — still in the weekend.</p>
+          <ul className="mt-4 grid gap-2">
+            {ir.map((player) => (
+              <li key={player.id}>
+                <PlayerButton player={player} onSelect={onSelect} />
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
     </section>
   );
 }

@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState, useEffectEvent } from "react";
 import { BrandLogo } from "@/components/brand-logo";
 import { createClient } from "@/lib/supabase/client";
 import { TeamSwatch } from "@/components/team-swatch";
+import { isActiveRosterPlayer } from "@/lib/player-status";
 import { teamAccentColor } from "@/lib/team-colors";
 import type { Player, Round, Team, TeamAssignment } from "@/lib/types";
 
@@ -107,7 +108,9 @@ export function LiveBoard({
   }
 
   const assignedIds = new Set(assignments.map((a) => a.player_id));
-  const unassignedCount = players.filter((p) => !assignedIds.has(p.id)).length;
+  const unassignedCount = players.filter(
+    (p) => isActiveRosterPlayer(p) && !assignedIds.has(p.id),
+  ).length;
 
   return (
     <section className="mx-auto flex min-h-dvh w-full max-w-2xl flex-col px-5 py-8">

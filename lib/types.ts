@@ -1,8 +1,12 @@
+import type { PlayerRosterStatus } from "@/lib/player-status";
+
 export type Player = {
   id: string;
   display_name: string;
   handicap: number | null;
   is_admin: boolean;
+  /** active = draftable roster; ir = sign-in only */
+  status: PlayerRosterStatus;
 };
 
 export type Tournament = {

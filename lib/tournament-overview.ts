@@ -129,6 +129,7 @@ export const ATTENDEES = [
   "Andy Franks",
   "Tyler Fullerton",
   "Andrew Heitzenrater",
+  "Larson Heitzenrater (IR)",
   "Rand Jackson",
   "Harrison Lee",
   "Garrett Liebe",

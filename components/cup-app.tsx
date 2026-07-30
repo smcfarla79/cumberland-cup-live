@@ -13,6 +13,7 @@ import { PlayerPicker } from "@/components/player-picker";
 import { TeamsTab } from "@/components/teams-tab";
 import { useSwipeableTabs } from "@/hooks/use-swipeable-tabs";
 import { clearSession, getSession, isSessionValid, setSession } from "@/lib/session";
+import { rosterStatusForPlayerId } from "@/lib/player-status";
 import { createClient } from "@/lib/supabase/client";
 import type {
   AppTab,
@@ -187,6 +188,7 @@ export function CupApp() {
             display_name: base.display_name,
             handicap: raw.handicap ?? null,
             is_admin: Boolean(raw.is_admin),
+            status: rosterStatusForPlayerId(base.id),
           } satisfies Player;
         })
         .filter((p): p is Player => Boolean(p))

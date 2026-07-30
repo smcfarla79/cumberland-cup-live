@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState, useEffectEvent } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { TeamSwatch } from "@/components/team-swatch";
+import { isActiveRosterPlayer } from "@/lib/player-status";
 import { teamAccentColor } from "@/lib/team-colors";
 import type { Player, Team, TeamAssignment } from "@/lib/types";
 
@@ -53,7 +54,9 @@ export function TeamDraft({
   }, [tournamentId, teams]);
 
   const assignedIds = new Set(assignments.map((a) => a.player_id));
-  const unassigned = players.filter((p) => !assignedIds.has(p.id));
+  const unassigned = players.filter(
+    (p) => isActiveRosterPlayer(p) && !assignedIds.has(p.id),
+  );
 
   function membersFor(teamId: string) {
     const ids = new Set(
