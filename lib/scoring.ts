@@ -65,7 +65,7 @@ export function formatLabel(format: PlayFormat): string {
     case "best_ball":
       return "Best ball (net)";
     case "scramble":
-      return "Scramble";
+      return "Scramble (gross)";
     case "shamble":
       return "Shamble";
     case "singles":

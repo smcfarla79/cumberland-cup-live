@@ -40,6 +40,7 @@ export function ScoreEntry({
   onBack,
 }: ScoreEntryProps) {
   const format = resolvePlayFormat(round);
+  const useHandicaps = format !== "scramble";
   const roundHoles = useMemo(
     () => holesForRound(round, holes),
     [round, holes],
@@ -236,7 +237,11 @@ export function ScoreEntry({
         </h1>
         <p className="mt-2 text-sm text-muted">
           {playerName}
-          {playerHandicap != null ? ` · HCP ${playerHandicap}` : " · no HCP set"}
+          {useHandicaps
+            ? playerHandicap != null
+              ? ` · HCP ${playerHandicap}`
+              : " · no HCP set"
+            : ""}
           {" · "}
           {formatLabel(format)}
         </p>
@@ -290,7 +295,7 @@ export function ScoreEntry({
               </p>
               <p className="mt-2 text-sm text-muted">
                 Par {hole.par}
-                {hole.handicap_index != null
+                {useHandicaps && hole.handicap_index != null
                   ? ` · Stroke index ${hole.handicap_index}`
                   : ""}
                 {hole.yards ? ` · ${hole.yards} yds White` : ""}
@@ -309,22 +314,31 @@ export function ScoreEntry({
             </div>
           </div>
 
-          <div className="mt-4 grid grid-cols-2 gap-3 rounded-2xl border border-mist bg-fog px-4 py-3 text-sm">
-            <div>
-              <p className="text-xs text-muted">Strokes received</p>
-              <p className="font-semibold text-ink">
-                {strokesGot > 0 ? `−${strokesGot}` : "0"}
-              </p>
+          {useHandicaps ? (
+            <div className="mt-4 grid grid-cols-2 gap-3 rounded-2xl border border-mist bg-fog px-4 py-3 text-sm">
+              <div>
+                <p className="text-xs text-muted">Strokes received</p>
+                <p className="font-semibold text-ink">
+                  {strokesGot > 0 ? `−${strokesGot}` : "0"}
+                </p>
+              </div>
+              <div>
+                <p className="text-xs text-muted">Your net</p>
+                <p className="font-semibold text-ink">
+                  {myNet == null
+                    ? "—"
+                    : `${myNet} · ${toParLabel(myNet, hole.par)}`}
+                </p>
+              </div>
             </div>
-            <div>
-              <p className="text-xs text-muted">Your net</p>
-              <p className="font-semibold text-ink">
-                {myNet == null
-                  ? "—"
-                  : `${myNet} · ${toParLabel(myNet, hole.par)}`}
-              </p>
+          ) : (
+            <div className="mt-4 rounded-2xl border border-mist bg-fog px-4 py-3 text-sm text-muted">
+              Scramble is scored gross — no handicaps.
+              {currentStrokes != null
+                ? ` · ${toParLabel(currentStrokes, hole.par)}`
+                : ""}
             </div>
-          </div>
+          )}
 
           {format === "best_ball" ? (
             <div className="mt-3 rounded-2xl border border-pine/30 bg-pine/5 px-4 py-3 text-sm">

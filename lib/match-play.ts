@@ -30,10 +30,13 @@ function sideNets(args: {
   holeStrokeIndex: number | null;
   players: Player[];
   scoresByPlayer: Record<string, Record<number, number>>;
+  /** Scramble is scored gross — no strokes given/received. */
+  useGross: boolean;
 }): Array<number | null> {
   return args.side.map((mp) => {
     const gross = args.scoresByPlayer[mp.player_id]?.[args.holeNumber];
     if (gross == null) return null;
+    if (args.useGross) return gross;
     const player = args.players.find((p) => p.id === mp.player_id);
     return netScore(gross, player?.handicap ?? null, args.holeStrokeIndex);
   });
@@ -60,6 +63,7 @@ export function calculateMatchPlayStanding(args: {
   teamBName: string;
 }): MatchPlayStanding {
   const roundHoles = holesForRound(args.round, args.holes);
+  const useGross = resolvePlayFormat(args.round) === "scramble";
   const holeResults: HoleResult[] = [];
 
   let teamAHolesWon = 0;
@@ -73,6 +77,7 @@ export function calculateMatchPlayStanding(args: {
       holeStrokeIndex: hole.handicap_index,
       players: args.players,
       scoresByPlayer: args.scoresByPlayer,
+      useGross,
     });
     const netsB = sideNets({
       side: args.sideB,
@@ -80,6 +85,7 @@ export function calculateMatchPlayStanding(args: {
       holeStrokeIndex: hole.handicap_index,
       players: args.players,
       scoresByPlayer: args.scoresByPlayer,
+      useGross,
     });
 
     const teamANet = teamHoleScore(netsA, args.sideSize);

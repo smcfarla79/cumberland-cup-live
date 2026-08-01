@@ -61,6 +61,7 @@ export function MatchScoreboard({
 }: MatchScoreboardProps) {
   const format = resolvePlayFormat(round);
   const shareTeamScore = format === "scramble";
+  const useHandicaps = format !== "scramble";
   const roundHoles = useMemo(() => holesForRound(round, holes), [round, holes]);
   const sortedTeams = useMemo(
     () => [...teams].sort((a, b) => a.name.localeCompare(b.name)),
@@ -258,7 +259,9 @@ export function MatchScoreboard({
       const net =
         gross == null
           ? null
-          : netScore(gross, player?.handicap ?? null, hole.handicap_index);
+          : useHandicaps
+            ? netScore(gross, player?.handicap ?? null, hole.handicap_index)
+            : gross;
       return { mp, player, gross, net };
     });
     const best =
@@ -285,17 +288,18 @@ export function MatchScoreboard({
               Best ball {best} · {toParLabel(best, hole.par)}
             </p>
           ) : shareTeamScore ? (
-            <p className="text-xs font-semibold text-fairway">Team score</p>
+            <p className="text-xs font-semibold text-fairway">
+              Team score · no handicaps
+            </p>
           ) : null}
         </div>
         <ul className="space-y-3">
           {nets.map(({ mp, player, gross, net }) => {
             const editable = canEditPlayer(mp.player_id);
             const saving = savingPlayerId === mp.player_id;
-            const strokesGot = strokesReceivedOnHole(
-              player?.handicap,
-              hole.handicap_index,
-            );
+            const strokesGot = useHandicaps
+              ? strokesReceivedOnHole(player?.handicap, hole.handicap_index)
+              : 0;
             const isYou = mp.player_id === sessionPlayerId;
             const nameColor = teamAccentColor(
               team.color,
@@ -318,16 +322,31 @@ export function MatchScoreboard({
                     >
                       {player?.display_name ?? "Unknown"}
                       {isYou ? " · you" : ""}
-                      {player?.handicap != null ? ` · HCP ${player.handicap}` : ""}
+                      {useHandicaps && player?.handicap != null
+                        ? ` · HCP ${player.handicap}`
+                        : ""}
                     </p>
                     <p className="mt-1 text-sm text-muted">
-                      {strokesGot > 0
-                        ? `Stroke hole (−${strokesGot})`
-                        : "No stroke"}
-                      {net != null
-                        ? ` · net ${net} · ${toParLabel(net, hole.par)}`
-                        : ""}
-                      {!editable ? " · view only" : ""}
+                      {useHandicaps
+                        ? [
+                            strokesGot > 0
+                              ? `Stroke hole (−${strokesGot})`
+                              : "No stroke",
+                            net != null
+                              ? `net ${net} · ${toParLabel(net, hole.par)}`
+                              : null,
+                            !editable ? "view only" : null,
+                          ]
+                            .filter(Boolean)
+                            .join(" · ")
+                        : [
+                            gross != null
+                              ? toParLabel(gross, hole.par)
+                              : null,
+                            !editable ? "view only" : null,
+                          ]
+                            .filter(Boolean)
+                            .join(" · ") || "\u00a0"}
                     </p>
                   </div>
                   <div className="flex flex-col items-end gap-1">
@@ -509,10 +528,10 @@ export function MatchScoreboard({
       {hole ? (
         <div className="mt-4 rounded-2xl border border-mist bg-white px-4 py-3 text-sm text-muted shadow-[0_4px_14px_rgba(20,32,27,0.06)]">
           Hole {hole.hole_number} · Par {hole.par}
-          {hole.handicap_index != null
+          {useHandicaps && hole.handicap_index != null
             ? ` · Stroke index ${hole.handicap_index}`
             : ""}
-          {shareTeamScore ? " · scramble: shared team score" : ""}
+          {shareTeamScore ? " · scramble: shared team score · no handicaps" : ""}
         </div>
       ) : null}
 
@@ -566,7 +585,7 @@ export function MatchScoreboard({
                   const gross = scoresByPlayer[mp.player_id]?.[h.hole_number];
                   const player = players.find((p) => p.id === mp.player_id);
                   const net =
-                    gross == null
+                    !useHandicaps || gross == null
                       ? null
                       : netScore(
                           gross,
@@ -592,7 +611,9 @@ export function MatchScoreboard({
         </table>
       </div>
       <p className="mt-2 text-xs text-muted">
-        Grid shows gross, or gross/net when a stroke applies.
+        {useHandicaps
+          ? "Grid shows gross, or gross/net when a stroke applies."
+          : "Scramble is scored gross — no handicaps."}
       </p>
     </section>
   );
