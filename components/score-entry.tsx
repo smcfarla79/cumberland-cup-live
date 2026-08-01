@@ -10,6 +10,7 @@ import {
 import {
   bestBallNet,
   formatLabel,
+  holeStrokeIndex,
   netScore,
   resolvePlayFormat,
   strokesReceivedOnHole,
@@ -154,26 +155,27 @@ export function ScoreEntry({
 
   const hole =
     roundHoles.find((h) => h.hole_number === activeHole) ?? roundHoles[0];
+  const activeStrokeIndex = hole ? holeStrokeIndex(hole, format) : null;
   const currentStrokes = scores[activeHole];
   const total = Object.values(scores).reduce((sum, n) => sum + n, 0);
   const holesPlayed = Object.keys(scores).length;
   const activeIndex = roundHoles.findIndex((h) => h.hole_number === activeHole);
 
   const strokesGot = hole
-    ? strokesReceivedOnHole(playerHandicap, hole.handicap_index)
+    ? strokesReceivedOnHole(playerHandicap, activeStrokeIndex)
     : 0;
   const myNet =
     currentStrokes != null && hole
-      ? netScore(currentStrokes, playerHandicap, hole.handicap_index)
+      ? netScore(currentStrokes, playerHandicap, activeStrokeIndex)
       : null;
 
   const partnerGross = partner ? partnerScores[activeHole] : undefined;
   const partnerNet =
     partner && partnerGross != null && hole
-      ? netScore(partnerGross, partner.handicap, hole.handicap_index)
+      ? netScore(partnerGross, partner.handicap, activeStrokeIndex)
       : null;
   const partnerStrokesGot = hole
-    ? strokesReceivedOnHole(partner?.handicap, hole.handicap_index)
+    ? strokesReceivedOnHole(partner?.handicap, activeStrokeIndex)
     : 0;
 
   const teamBest =
@@ -295,8 +297,8 @@ export function ScoreEntry({
               </p>
               <p className="mt-2 text-sm text-muted">
                 Par {hole.par}
-                {useHandicaps && hole.handicap_index != null
-                  ? ` · Stroke index ${hole.handicap_index}`
+                {useHandicaps && activeStrokeIndex != null
+                  ? ` · Stroke index ${activeStrokeIndex}`
                   : ""}
                 {hole.yards ? ` · ${hole.yards} yds White` : ""}
               </p>

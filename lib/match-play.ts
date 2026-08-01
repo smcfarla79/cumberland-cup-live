@@ -1,5 +1,5 @@
 import { holesForRound } from "@/lib/course-holes";
-import { bestBallNet, netScore, resolvePlayFormat } from "@/lib/scoring";
+import { bestBallNet, holeStrokeIndex, netScore, resolvePlayFormat } from "@/lib/scoring";
 import type { Hole, MatchPlayer, Player, Round, Team } from "@/lib/types";
 
 export type HoleResult = {
@@ -63,7 +63,8 @@ export function calculateMatchPlayStanding(args: {
   teamBName: string;
 }): MatchPlayStanding {
   const roundHoles = holesForRound(args.round, args.holes);
-  const useGross = resolvePlayFormat(args.round) === "scramble";
+  const format = resolvePlayFormat(args.round);
+  const useGross = format === "scramble";
   const holeResults: HoleResult[] = [];
 
   let teamAHolesWon = 0;
@@ -71,10 +72,11 @@ export function calculateMatchPlayStanding(args: {
   let holesPlayed = 0;
 
   for (const hole of roundHoles) {
+    const strokeIndex = holeStrokeIndex(hole, format);
     const netsA = sideNets({
       side: args.sideA,
       holeNumber: hole.hole_number,
-      holeStrokeIndex: hole.handicap_index,
+      holeStrokeIndex: strokeIndex,
       players: args.players,
       scoresByPlayer: args.scoresByPlayer,
       useGross,
@@ -82,7 +84,7 @@ export function calculateMatchPlayStanding(args: {
     const netsB = sideNets({
       side: args.sideB,
       holeNumber: hole.hole_number,
-      holeStrokeIndex: hole.handicap_index,
+      holeStrokeIndex: strokeIndex,
       players: args.players,
       scoresByPlayer: args.scoresByPlayer,
       useGross,

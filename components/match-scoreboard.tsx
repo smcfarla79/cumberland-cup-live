@@ -9,6 +9,7 @@ import { compactMatchStatus } from "@/lib/match-status";
 import {
   bestBallNet,
   formatLabel,
+  holeStrokeIndex,
   netScore,
   resolvePlayFormat,
   strokesReceivedOnHole,
@@ -129,6 +130,7 @@ export function MatchScoreboard({
 
   const hole =
     roundHoles.find((h) => h.hole_number === activeHole) ?? roundHoles[0];
+  const activeStrokeIndex = hole ? holeStrokeIndex(hole, format) : null;
   const standing =
     teamA && teamB
       ? calculateMatchPlayStanding({
@@ -260,7 +262,7 @@ export function MatchScoreboard({
         gross == null
           ? null
           : useHandicaps
-            ? netScore(gross, player?.handicap ?? null, hole.handicap_index)
+            ? netScore(gross, player?.handicap ?? null, activeStrokeIndex)
             : gross;
       return { mp, player, gross, net };
     });
@@ -298,7 +300,7 @@ export function MatchScoreboard({
             const editable = canEditPlayer(mp.player_id);
             const saving = savingPlayerId === mp.player_id;
             const strokesGot = useHandicaps
-              ? strokesReceivedOnHole(player?.handicap, hole.handicap_index)
+              ? strokesReceivedOnHole(player?.handicap, activeStrokeIndex)
               : 0;
             const isYou = mp.player_id === sessionPlayerId;
             const nameColor = teamAccentColor(
@@ -528,8 +530,8 @@ export function MatchScoreboard({
       {hole ? (
         <div className="mt-4 rounded-2xl border border-mist bg-white px-4 py-3 text-sm text-muted shadow-[0_4px_14px_rgba(20,32,27,0.06)]">
           Hole {hole.hole_number} · Par {hole.par}
-          {useHandicaps && hole.handicap_index != null
-            ? ` · Stroke index ${hole.handicap_index}`
+          {useHandicaps && activeStrokeIndex != null
+            ? ` · Stroke index ${activeStrokeIndex}`
             : ""}
           {shareTeamScore ? " · scramble: shared team score · no handicaps" : ""}
         </div>
@@ -590,7 +592,7 @@ export function MatchScoreboard({
                       : netScore(
                           gross,
                           player?.handicap ?? null,
-                          h.handicap_index,
+                          holeStrokeIndex(h, format),
                         );
                   return (
                     <td

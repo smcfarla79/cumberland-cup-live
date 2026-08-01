@@ -86,6 +86,42 @@ export function toParLabel(net: number, par: number): string {
   return `+${diff}`;
 }
 
-export function holeStrokeIndex(hole: Hole): number | null {
-  return hole.handicap_index;
+/**
+ * Stroke indexes from the BlueGolf card used for earlier weekend rounds.
+ * Front/back Hdcp were flipped vs the printed Sewanee scorecard.
+ */
+const LEGACY_STROKE_INDEX: Record<number, number> = {
+  1: 1,
+  2: 3,
+  3: 13,
+  4: 17,
+  5: 11,
+  6: 5,
+  7: 9,
+  8: 15,
+  9: 7,
+  10: 2,
+  11: 4,
+  12: 14,
+  13: 18,
+  14: 8,
+  15: 6,
+  16: 10,
+  17: 16,
+  18: 12,
+};
+
+/**
+ * Singles uses the printed Sewanee scorecard (`holes.handicap_index`).
+ * Best ball / shamble / other earlier formats keep legacy indexes so prior
+ * match nets do not change.
+ */
+export function holeStrokeIndex(
+  hole: Hole,
+  format: PlayFormat = "stroke",
+): number | null {
+  if (format === "singles") {
+    return hole.handicap_index;
+  }
+  return LEGACY_STROKE_INDEX[hole.hole_number] ?? hole.handicap_index;
 }
