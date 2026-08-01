@@ -4,6 +4,10 @@ import { useEffect, useMemo, useRef, useState, useEffectEvent } from "react";
 import { SavedBadge } from "@/components/saved-badge";
 import { TeamSwatch } from "@/components/team-swatch";
 import { holesForRound } from "@/lib/course-holes";
+import {
+  desiredMatchCompletion,
+  matchNeedsFinalize,
+} from "@/lib/finalize-matches";
 import { calculateMatchPlayStanding } from "@/lib/match-play";
 import { compactMatchStatus } from "@/lib/match-status";
 import {
@@ -238,6 +242,36 @@ export function MatchScoreboard({
       setMessage(error.message);
       await loadScores();
       return;
+    }
+
+    // Persist cup result once hole scores decide the match
+    if (teamA && teamB) {
+      const nextScores = { ...scoresByPlayer };
+      for (const id of targets) {
+        nextScores[id] = {
+          ...(nextScores[id] ?? {}),
+          [activeHole]: strokes,
+        };
+      }
+      const nextStanding = calculateMatchPlayStanding({
+        round,
+        holes,
+        sideA,
+        sideB,
+        sideSize: match.side_size,
+        players,
+        scoresByPlayer: nextScores,
+        teamAName: teamA.name,
+        teamBName: teamB.name,
+      });
+      const nextDesired = desiredMatchCompletion(
+        nextStanding,
+        teamA.id,
+        teamB.id,
+      );
+      if (nextDesired && matchNeedsFinalize(match, nextDesired)) {
+        await supabase.from("matches").update(nextDesired).eq("id", match.id);
+      }
     }
 
     setSavedPlayerId(playerId);

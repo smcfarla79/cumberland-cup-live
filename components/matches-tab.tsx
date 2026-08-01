@@ -3,6 +3,10 @@
 import { useEffect, useMemo, useState, useEffectEvent } from "react";
 import { MatchScoreboard } from "@/components/match-scoreboard";
 import {
+  desiredMatchCompletion,
+  matchNeedsFinalize,
+} from "@/lib/finalize-matches";
+import {
   calculateMatchPlayStanding,
   isMatchPlayFormat,
 } from "@/lib/match-play";
@@ -193,28 +197,13 @@ export function MatchesTab({
 
         if (!standing.finalResult) continue;
 
-        const desired = {
-          status: "complete" as const,
-          is_halved: standing.finalResult === "halve",
-          winning_team_id:
-            standing.finalResult === "halve"
-              ? null
-              : standing.finalResult === "team_a"
-                ? teamA.id
-                : teamB.id,
-        };
+        const desired = desiredMatchCompletion(standing, teamA.id, teamB.id);
+        if (!desired || !matchNeedsFinalize(match, desired)) continue;
 
-        const already =
-          match.status === "complete" &&
-          match.is_halved === desired.is_halved &&
-          match.winning_team_id === desired.winning_team_id;
-
-        if (!already) {
-          await supabase.from("matches").update(desired).eq("id", match.id);
-          match.status = desired.status;
-          match.is_halved = desired.is_halved;
-          match.winning_team_id = desired.winning_team_id;
-        }
+        await supabase.from("matches").update(desired).eq("id", match.id);
+        match.status = desired.status;
+        match.is_halved = desired.is_halved;
+        match.winning_team_id = desired.winning_team_id;
       }
       setMatches([...withPlayers]);
     }

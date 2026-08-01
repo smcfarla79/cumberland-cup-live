@@ -4,7 +4,14 @@ import { useEffect, useMemo, useState, useEffectEvent } from "react";
 import { BrandLogo } from "@/components/brand-logo";
 import { TeamSwatch } from "@/components/team-swatch";
 import { useLiveMatches, type MatchWithPlayers } from "@/hooks/use-live-matches";
-import { calculateMatchPlayStanding } from "@/lib/match-play";
+import {
+  desiredMatchCompletion,
+  matchNeedsFinalize,
+} from "@/lib/finalize-matches";
+import {
+  calculateMatchPlayStanding,
+  isMatchPlayFormat,
+} from "@/lib/match-play";
 import { compactMatchStatus } from "@/lib/match-status";
 import { createClient } from "@/lib/supabase/client";
 import {
@@ -109,6 +116,45 @@ export function CupTab({
     useLiveMatches(roundIds);
 
   const [myTeamId, setMyTeamId] = useState<string | null>(null);
+
+  const finalizeCompletedMatches = useEffectEvent(async () => {
+    if (!teamA || !teamB || matches.length === 0) return;
+    const supabase = createClient();
+    let changed = false;
+
+    for (const match of matches) {
+      if (match.status === "complete") continue;
+      const round = rounds.find((r) => r.id === match.round_id);
+      if (!round || !isMatchPlayFormat(round)) continue;
+
+      const standing = calculateMatchPlayStanding({
+        round,
+        holes,
+        sideA: match.players.filter((p) => p.team_id === teamA.id),
+        sideB: match.players.filter((p) => p.team_id === teamB.id),
+        sideSize: match.side_size,
+        players,
+        scoresByPlayer: scoresByRound[round.id] ?? {},
+        teamAName: teamA.name,
+        teamBName: teamB.name,
+      });
+
+      const desired = desiredMatchCompletion(standing, teamA.id, teamB.id);
+      if (!desired || !matchNeedsFinalize(match, desired)) continue;
+
+      const { error } = await supabase
+        .from("matches")
+        .update(desired)
+        .eq("id", match.id);
+      if (!error) changed = true;
+    }
+
+    if (changed) void refresh();
+  });
+
+  useEffect(() => {
+    void finalizeCompletedMatches();
+  }, [matches, scoresByRound, teamA?.id, teamB?.id, holes, players, rounds]);
 
   const loadMyTeam = useEffectEvent(async () => {
     if (!sessionPlayerId || !teamA || !teamB) {
